@@ -1,10 +1,10 @@
+using Microsoft.AspNetCore.HttpOverrides;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-var storageConfig = builder.Configuration.GetSection("StorageService");
-var storageBaseUrl = storageConfig["BaseUrl"];
-var ignoreSslErrors = storageConfig.GetValue<bool>("IgnoreSslErrors");
+var storageBaseUrl = builder.Configuration["StorageService:BaseUrl"];
 
 builder.Services.AddControllers();
 
@@ -16,8 +16,7 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer
     .AddJwtBearer(options =>
     {
         options.Authority = identityJwtSection["Authority"];
-        options.MetadataAddress = identityJwtSection["MetadataAddress"];
-        options.RequireHttpsMetadata = false; // HTTP in Docker dev
+        options.RequireHttpsMetadata = true;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidIssuer = identityJwtSection["Authority"],
@@ -31,18 +30,6 @@ builder.Services.AddHttpClient("storage", client =>
     {
         client.BaseAddress = new Uri(storageBaseUrl);
     }
-})
-.ConfigurePrimaryHttpMessageHandler(() =>
-{
-    if (ignoreSslErrors)
-    {
-        return new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-    }
-
-    return new HttpClientHandler();
 });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -55,6 +42,18 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+if (builder.Configuration.GetValue<bool>("ReverseProxy:TrustAllProxies"))
+{
+    // Dev only: trust all proxies inside the Docker network (Traefik).
+    // Do NOT enable in production.
+    forwardedOptions.KnownNetworks.Clear();
+    forwardedOptions.KnownProxies.Clear();
+}
+app.UseForwardedHeaders(forwardedOptions);
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
