@@ -1,8 +1,36 @@
+using Microsoft.AspNetCore.HttpOverrides;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+var storageBaseUrl = builder.Configuration["StorageService:BaseUrl"];
+
 builder.Services.AddControllers();
+
+// JWT validation: verify tokens issued by the Identity server.
+// ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
+// It does NOT participate in the OIDC login flow.
+var identityJwtSection = builder.Configuration.GetSection("IdentityJwt");
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = identityJwtSection["Authority"];
+        options.RequireHttpsMetadata = true;
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidIssuer = identityJwtSection["Authority"],
+            ValidateAudience = false // OpenIddict does not set aud by default
+        };
+    });
+
+builder.Services.AddHttpClient("storage", client =>
+{
+    if (!string.IsNullOrEmpty(storageBaseUrl))
+    {
+        client.BaseAddress = new Uri(storageBaseUrl);
+    }
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -14,8 +42,21 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+if (builder.Configuration.GetValue<bool>("ReverseProxy:TrustAllProxies"))
+{
+    // Dev only: trust all proxies inside the Docker network (Traefik).
+    // Do NOT enable in production.
+    forwardedOptions.KnownNetworks.Clear();
+    forwardedOptions.KnownProxies.Clear();
+}
+app.UseForwardedHeaders(forwardedOptions);
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
