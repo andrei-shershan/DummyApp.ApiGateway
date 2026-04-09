@@ -1,11 +1,7 @@
-using System.Collections.Generic;
-using System.Net.Http;
+using DummyApp.ApiGateway.WebApi.Services;
 using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace DummyApp.ApiGateway.WebApi.Controllers
 {
@@ -14,12 +10,12 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
     public class TestController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IConfiguration _configuration;
+        private readonly IClientCredentialsTokenCache _tokenCache;
 
-        public TestController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public TestController(IHttpClientFactory httpClientFactory, IClientCredentialsTokenCache tokenCache)
         {
             _httpClientFactory = httpClientFactory;
-            _configuration = configuration;
+            _tokenCache = tokenCache;
         }
 
         [HttpGet("testA")]
@@ -57,7 +53,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
                 return BadRequest(new { error = "Type must be 'R' or 'W'." });
             }
 
-            var accessToken = await AcquireClientCredentialsTokenAsync(scope);
+            var accessToken = await _tokenCache.GetTokenAsync(scope);
             if (accessToken is null)
             {
                 return StatusCode(502, new { error = "Unable to acquire access token from identity." });
@@ -72,6 +68,19 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await httpClient.GetAsync("api/test/testX");
             var content = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                // Token may have been revoked — clear the cache and retry once.
+                _tokenCache.Invalidate(scope);
+                accessToken = await _tokenCache.GetTokenAsync(scope);
+                if (accessToken is null)
+                    return StatusCode(502, new { error = "Unable to re-acquire access token from identity." });
+
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                response = await httpClient.GetAsync("api/test/testX");
+                content = await response.Content.ReadAsStringAsync();
+            }
 
             if (!response.IsSuccessStatusCode)
             {
@@ -99,7 +108,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
 
             // The user's identity was already validated by [Authorize] (JWT from Identity).
             // To call StorageService we still use client credentials (M2M token).
-            var accessToken = await AcquireClientCredentialsTokenAsync(scope);
+            var accessToken = await _tokenCache.GetTokenAsync(scope);
             if (accessToken is null)
             {
                 return StatusCode(502, new { error = "Unable to acquire access token from identity." });
@@ -129,43 +138,6 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
                 authenticatedAs = new { sub = userSub, name = userName },
                 storageResponse = content
             });
-        }
-
-        private async Task<string?> AcquireClientCredentialsTokenAsync(string scope)
-        {
-            var identity = _configuration.GetSection("Identity");
-            var metadataAddress = identity["MetadataAddress"]?.TrimEnd('/');
-            var tokenEndpoint = !string.IsNullOrEmpty(metadataAddress) && metadataAddress.EndsWith("/.well-known/openid-configuration")
-                ? metadataAddress[..^"/.well-known/openid-configuration".Length] + "/connect/token"
-                : identity["Authority"]?.TrimEnd('/') + "/connect/token";
-
-            if (string.IsNullOrEmpty(tokenEndpoint))
-            {
-                return null;
-            }
-
-            var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
-            {
-                Content = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["grant_type"] = "client_credentials",
-                    ["client_id"] = identity["ClientId"] ?? string.Empty,
-                    ["client_secret"] = identity["ClientSecret"] ?? string.Empty,
-                    ["scope"] = scope
-                })
-            };
-
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            return document.RootElement.TryGetProperty("access_token", out var token)
-                ? token.GetString()
-                : null;
         }
     }
 }

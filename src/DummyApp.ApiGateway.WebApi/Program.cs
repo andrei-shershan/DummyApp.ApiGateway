@@ -1,3 +1,4 @@
+using DummyApp.ApiGateway.WebApi.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 var storageBaseUrl = builder.Configuration["StorageService:BaseUrl"];
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IClientCredentialsTokenCache, ClientCredentialsTokenCache>();
 
 // JWT validation: verify tokens issued by the Identity server.
 // ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
