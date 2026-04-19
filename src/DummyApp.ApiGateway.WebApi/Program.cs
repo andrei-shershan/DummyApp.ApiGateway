@@ -1,7 +1,18 @@
+using Azure.Identity;
 using DummyApp.ApiGateway.WebApi.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Key Vault: add in stg/prod only; local dev uses appsettings.Development.json
+if (!builder.Environment.IsDevelopment())
+{
+    var keyVaultUrl = builder.Configuration["KeyVault:Url"];
+    if (!string.IsNullOrEmpty(keyVaultUrl))
+    {
+        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
+    }
+}
 
 // Add services to the container.
 
