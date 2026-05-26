@@ -1,5 +1,8 @@
 using Azure.Identity;
+using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
+using DummyApp.ApiGateway.Infrastructure.Services;
 using DummyApp.ApiGateway.WebApi.Services;
+using MediatR;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +24,20 @@ var storageBaseUrl = builder.Configuration["StorageService:BaseUrl"];
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IClientCredentialsTokenCache, ClientCredentialsTokenCache>();
+builder.Services.AddMediatR(typeof(CreateArtworkCommand).Assembly);
+
+builder.Services.AddHttpClient<IStorageServiceClient, StorageServiceClient>(client =>
+{
+    if (!string.IsNullOrEmpty(storageBaseUrl))
+    {
+        client.BaseAddress = new Uri(storageBaseUrl);
+    }
+})
+.AddHttpMessageHandler(sp => new ClientCredentialsTokenHandler(
+    sp.GetRequiredService<IClientCredentialsTokenCache>(),
+    scope: "storage.write",
+    cacheKey: "storage",
+    sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
 
 // JWT validation: verify tokens issued by the Identity server.
 // ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
