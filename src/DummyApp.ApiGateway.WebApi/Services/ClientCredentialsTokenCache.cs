@@ -1,13 +1,8 @@
+using DummyApp.ApiGateway.Infrastructure.Services;
 using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
 
 namespace DummyApp.ApiGateway.WebApi.Services;
-
-public interface IClientCredentialsTokenCache
-{
-    Task<string?> GetTokenAsync(string scope, CancellationToken ct = default);
-    void Invalidate(string scope);
-}
 
 public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
 {
@@ -32,11 +27,11 @@ public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
         _logger = logger;
     }
 
-    public async Task<string?> GetTokenAsync(string scope, CancellationToken ct = default)
+    public async Task<string?> GetTokenAsync(string scope, string cacheKey, CancellationToken ct = default)
     {
-        var cacheKey = $"cc_token:{scope}";
+        var cacheEntryKey = $"cc_token:{cacheKey}";
 
-        if (_cache.TryGetValue(cacheKey, out string? cached))
+        if (_cache.TryGetValue(cacheEntryKey, out string? cached))
         {
             return cached;
         }
@@ -48,18 +43,18 @@ public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
         }
 
         var ttl = TimeSpan.FromSeconds(Math.Max(expiresIn - ExpiryBufferSeconds, 30));
-        _cache.Set(cacheKey, token, ttl);
+        _cache.Set(cacheEntryKey, token, ttl);
 
         _logger.LogInformation(
-            "Acquired new client-credentials token for scope '{Scope}', cached for {Ttl}",
-            scope, ttl);
+            "Acquired new client-credentials token for cache '{CacheKey}' and scope '{Scope}', cached for {Ttl}",
+            cacheKey, scope, ttl);
 
         return token;
     }
 
-    public void Invalidate(string scope)
+    public void Invalidate(string cacheKey)
     {
-        _cache.Remove($"cc_token:{scope}");
+        _cache.Remove($"cc_token:{cacheKey}");
     }
 
     private async Task<(string? Token, int ExpiresIn)> FetchTokenAsync(string scope, CancellationToken ct)

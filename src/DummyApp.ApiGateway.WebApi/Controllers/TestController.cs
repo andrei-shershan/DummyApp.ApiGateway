@@ -1,3 +1,4 @@
+using DummyApp.ApiGateway.Infrastructure.Services;
 using DummyApp.ApiGateway.WebApi.Services;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
@@ -53,7 +54,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
                 return BadRequest(new { error = "Type must be 'R' or 'W'." });
             }
 
-            var accessToken = await _tokenCache.GetTokenAsync(scope);
+            var accessToken = await _tokenCache.GetTokenAsync(scope, "storage");
             if (accessToken is null)
             {
                 return StatusCode(502, new { error = "Unable to acquire access token from identity." });
@@ -72,8 +73,8 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
                 // Token may have been revoked — clear the cache and retry once.
-                _tokenCache.Invalidate(scope);
-                accessToken = await _tokenCache.GetTokenAsync(scope);
+                _tokenCache.Invalidate("storage");
+                accessToken = await _tokenCache.GetTokenAsync(scope, "storage");
                 if (accessToken is null)
                     return StatusCode(502, new { error = "Unable to re-acquire access token from identity." });
 
@@ -108,7 +109,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
 
             // The user's identity was already validated by [Authorize] (JWT from Identity).
             // To call StorageService we still use client credentials (M2M token).
-            var accessToken = await _tokenCache.GetTokenAsync(scope);
+            var accessToken = await _tokenCache.GetTokenAsync(scope, "storage");
             if (accessToken is null)
             {
                 return StatusCode(502, new { error = "Unable to acquire access token from identity." });
