@@ -20,6 +20,7 @@ if (!builder.Environment.IsDevelopment())
 // Add services to the container.
 
 var storageBaseUrl = builder.Configuration["StorageService:BaseUrl"];
+var blobServiceBaseUrl = builder.Configuration["BlobService:BaseUrl"];
 
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
@@ -62,6 +63,15 @@ builder.Services.AddHttpClient("storage", client =>
         client.BaseAddress = new Uri(storageBaseUrl);
     }
 });
+
+builder.Services.AddHttpClient("blobservice", client =>
+{
+    if (!string.IsNullOrEmpty(blobServiceBaseUrl))
+    {
+        client.BaseAddress = new Uri(blobServiceBaseUrl);
+    }
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
