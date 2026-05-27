@@ -39,6 +39,26 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
             return Content(content, "application/json");
         }
 
+        [HttpGet("blobservice")]
+        public async Task<IActionResult> GetBlobServiceAnonymous()
+        {
+            var httpClient = _httpClientFactory.CreateClient("blobservice");
+            if (httpClient.BaseAddress == null)
+            {
+                return Problem("BlobService URL is not configured.");
+            }
+
+            var response = await httpClient.GetAsync("api/blobservice");
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, content);
+            }
+
+            return Content(content, response.Content.Headers.ContentType?.MediaType ?? "text/plain");
+        }
+
         [HttpGet("testX/{type}")]
         public async Task<IActionResult> GetStorageTestX(string type)
         {
