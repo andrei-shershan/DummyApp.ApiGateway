@@ -19,8 +19,8 @@ if (!builder.Environment.IsDevelopment())
 
 // Add services to the container.
 
-var storageBaseUrl = builder.Configuration["StorageService:BaseUrl"];
-var blobServiceBaseUrl = builder.Configuration["BlobService:BaseUrl"];
+var storageBaseUrl = builder.Configuration["Services:StorageService:BaseUrl"];
+var blobServiceBaseUrl = builder.Configuration["Services:BlobService:BaseUrl"];
 
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
@@ -43,15 +43,15 @@ builder.Services.AddHttpClient<IStorageServiceClient, StorageServiceClient>(clie
 // JWT validation: verify tokens issued by the Identity server.
 // ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
 // It does NOT participate in the OIDC login flow.
-var identityJwtSection = builder.Configuration.GetSection("IdentityJwt");
+var identityServerSection = builder.Configuration.GetSection("IdentityServer");
 builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = identityJwtSection["Authority"];
+        options.Authority = identityServerSection["Authority"];
         options.RequireHttpsMetadata = true;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
-            ValidIssuer = identityJwtSection["Authority"],
+            ValidIssuer = identityServerSection["Authority"],
             ValidateAudience = false // OpenIddict does not set aud by default
         };
     });

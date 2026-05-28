@@ -29,7 +29,7 @@ public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
 
     public async Task<string?> GetTokenAsync(string scope, string cacheKey, CancellationToken ct = default)
     {
-        var cacheEntryKey = $"cc_token:{cacheKey}";
+        var cacheEntryKey = $"cc_token:{cacheKey}:{scope}";
 
         if (_cache.TryGetValue(cacheEntryKey, out string? cached))
         {
@@ -54,22 +54,23 @@ public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
 
     public void Invalidate(string cacheKey)
     {
-        _cache.Remove($"cc_token:{cacheKey}");
+        _cache.Remove($"cc_token:{cacheKey}:storage.read");
+        _cache.Remove($"cc_token:{cacheKey}:storage.write");
     }
 
     private async Task<(string? Token, int ExpiresIn)> FetchTokenAsync(string scope, CancellationToken ct)
     {
-        var identity = _configuration.GetSection("Identity");
-        var authority = identity["Authority"]?.TrimEnd('/');
+        var authority = _configuration["IdentityServer:Authority"]?.TrimEnd('/');
         var tokenEndpoint = $"{authority}/connect/token";
+        var clientSection = _configuration.GetSection("IdentityServer:OidcClients:ApiGateway");
 
         var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
         {
             Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["grant_type"] = "client_credentials",
-                ["client_id"] = identity["ClientId"] ?? string.Empty,
-                ["client_secret"] = identity["ClientSecret"] ?? string.Empty,
+                ["client_id"] = clientSection["ClientId"] ?? string.Empty,
+                ["client_secret"] = clientSection["ClientSecret"] ?? string.Empty,
                 ["scope"] = scope
             })
         };
