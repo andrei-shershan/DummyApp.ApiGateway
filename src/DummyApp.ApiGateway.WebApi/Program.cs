@@ -13,7 +13,12 @@ if (!builder.Environment.IsDevelopment())
     var keyVaultUrl = builder.Configuration["KeyVault:Url"];
     if (!string.IsNullOrEmpty(keyVaultUrl))
     {
-        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
+        var clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+        var credential = string.IsNullOrEmpty(clientId)
+            ? new ManagedIdentityCredential()
+            : new ManagedIdentityCredential(clientId);
+
+        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl), credential);
     }
 }
 
@@ -39,6 +44,14 @@ builder.Services.AddHttpClient<IStorageServiceClient, StorageServiceClient>(clie
     scope: "storage.write",
     cacheKey: "storage",
     sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
+
+// builder.Services.AddHttpClient<IBlobServiceClient, BlobServiceHttpClient>(client =>
+// {
+//     if (!string.IsNullOrEmpty(blobServiceBaseUrl))
+//     {
+//         client.BaseAddress = new Uri(blobServiceBaseUrl);
+//     }
+// });
 
 // JWT validation: verify tokens issued by the Identity server.
 // ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
