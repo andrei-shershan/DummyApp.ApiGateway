@@ -45,13 +45,13 @@ builder.Services.AddHttpClient<IStorageServiceClient, StorageServiceClient>(clie
     cacheKey: "storage",
     sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
 
-builder.Services.AddHttpClient<IBlobServiceClient, BlobServiceHttpClient>(client =>
-{
-    if (!string.IsNullOrEmpty(blobServiceBaseUrl))
-    {
-        client.BaseAddress = new Uri(blobServiceBaseUrl);
-    }
-});
+// builder.Services.AddHttpClient<IBlobServiceClient, BlobServiceHttpClient>(client =>
+// {
+//     if (!string.IsNullOrEmpty(blobServiceBaseUrl))
+//     {
+//         client.BaseAddress = new Uri(blobServiceBaseUrl);
+//     }
+// });
 
 // JWT validation: verify tokens issued by the Identity server.
 // ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
