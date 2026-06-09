@@ -10,7 +10,8 @@ public sealed record CreateArtworkCommand(
     string ImgUrl,
     string SmallImgUrl,
     bool IsActive,
-    string? UploadedImage) : IRequest<CreateArtworkCommandResult>;
+    string? UploadedImage,
+    string CreatorId) : IRequest<CreateArtworkCommandResult>;
 
 public sealed record CreateArtworkCommandResult(
     int Id,
