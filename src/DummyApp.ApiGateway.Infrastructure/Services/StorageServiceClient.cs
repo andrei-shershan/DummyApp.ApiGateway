@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
+using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using Microsoft.Extensions.Logging;
 
 namespace DummyApp.ApiGateway.Infrastructure.Services;
@@ -21,6 +25,7 @@ public sealed class StorageServiceClient : IStorageServiceClient
     {
         var dto = new
         {
+            request.CreatorId,
             request.Name,
             request.Description,
             request.CreationDate,
@@ -44,5 +49,23 @@ public sealed class StorageServiceClient : IStorageServiceClient
         }
 
         return created;
+    }
+
+    public async Task<IEnumerable<ArtworkDto>> GetArtworksAsync(CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync("api/artworks", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Storage service returned {StatusCode} when fetching artworks: {Content}", response.StatusCode, content);
+            throw new InvalidOperationException($"Storage service returned {(int)response.StatusCode}: {response.ReasonPhrase}");
+        }
+
+        var artworks = await response.Content.ReadFromJsonAsync<IEnumerable<ArtworkDto>>(new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        }, cancellationToken);
+
+        return artworks ?? Array.Empty<ArtworkDto>();
     }
 }

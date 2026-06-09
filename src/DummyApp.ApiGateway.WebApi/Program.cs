@@ -21,6 +21,21 @@ if (!builder.Environment.IsDevelopment())
 
 var storageBaseUrl = builder.Configuration["Services:StorageService:BaseUrl"];
 var blobServiceBaseUrl = builder.Configuration["Services:BlobService:BaseUrl"];
+var blobStorageUrl = builder.Configuration["BlobStorage:StorageUrl"];
+var blobStorageContainer = builder.Configuration["BlobStorage:ContainerName"];
+
+if (string.IsNullOrWhiteSpace(blobStorageUrl))
+{
+    throw new InvalidOperationException("Blob storage URL is not configured. Set BlobStorage__StorageUrl.");
+}
+
+if (string.IsNullOrWhiteSpace(blobStorageContainer))
+{
+    throw new InvalidOperationException("Blob storage container name is not configured. Set BlobStorage__ContainerName.");
+}
+
+builder.Services.AddSingleton(new BlobStorageSettings(blobStorageUrl, blobStorageContainer));
+builder.Services.AddScoped<IStorageUrlService, StorageUrlService>();
 
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
@@ -39,6 +54,14 @@ builder.Services.AddHttpClient<IStorageServiceClient, StorageServiceClient>(clie
     scope: "storage.write",
     cacheKey: "storage",
     sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
+
+builder.Services.AddHttpClient<IBlobServiceClient, BlobServiceHttpClient>(client =>
+{
+    if (!string.IsNullOrEmpty(blobServiceBaseUrl))
+    {
+        client.BaseAddress = new Uri(blobServiceBaseUrl);
+    }
+});
 
 // JWT validation: verify tokens issued by the Identity server.
 // ApiGateway itself only validates the token (issued by Identity and forwarded by BFF).
