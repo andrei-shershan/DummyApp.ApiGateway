@@ -36,15 +36,6 @@ public sealed class ArtworksController : ControllerBase
     [Authorize(Roles = "Creator")]
     public async Task<IActionResult> CreateArtwork([FromBody] CreateArtworkBodyRequest body)
     {
-        _logger.LogInformation("CreateArtwork called. User authenticated: {IsAuthenticated}, name: {Name}, authType: {AuthType}",
-            User.Identity?.IsAuthenticated,
-            User.Identity?.Name,
-            User.Identity?.AuthenticationType);
-
-        foreach (var claim in User.Claims)
-        {
-            _logger.LogInformation("User claim: {ClaimType} = {ClaimValue}", claim.Type, claim.Value);
-        }
 
         // In JWT bearer auth, the standard OIDC "sub" claim is often mapped to
         // ClaimTypes.NameIdentifier, so the raw "sub" may not be available here.
