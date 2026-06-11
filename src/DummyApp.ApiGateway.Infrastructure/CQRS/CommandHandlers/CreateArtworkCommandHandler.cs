@@ -28,9 +28,6 @@ public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkC
     {
         var command = request;
 
-        _logger.LogInformation("Hello from CreateArtworkCommandHandler. Request: {Request}", request);
-        _logger.LogInformation("Request contains image: {HasImage}", !string.IsNullOrEmpty(request.UploadedImage));
-
         if (!string.IsNullOrEmpty(request.UploadedImage))
         {
             var fileName = $"{Guid.NewGuid()}.jpg";
