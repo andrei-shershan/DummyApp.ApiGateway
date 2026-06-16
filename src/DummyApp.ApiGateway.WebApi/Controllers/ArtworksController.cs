@@ -1,17 +1,15 @@
 using System.Security.Claims;
-using System.Threading.Tasks;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.WebApi.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace DummyApp.ApiGateway.WebApi.Controllers;
 
 [ApiController]
-[Route("api/artworks")]
+[Route("api/[controller]")]
 [Authorize]
 public sealed class ArtworksController : ControllerBase
 {
@@ -36,9 +34,6 @@ public sealed class ArtworksController : ControllerBase
     [Authorize(Roles = "Creator")]
     public async Task<IActionResult> CreateArtwork([FromBody] CreateArtworkBodyRequest body)
     {
-
-        // In JWT bearer auth, the standard OIDC "sub" claim is often mapped to
-        // ClaimTypes.NameIdentifier, so the raw "sub" may not be available here.
         var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrWhiteSpace(creatorId))

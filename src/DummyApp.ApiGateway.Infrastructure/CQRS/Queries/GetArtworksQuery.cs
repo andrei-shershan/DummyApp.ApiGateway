@@ -1,6 +1,4 @@
 using MediatR;
-using System;
-using System.Collections.Generic;
 
 namespace DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 

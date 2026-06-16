@@ -1,16 +1,13 @@
-using System;
-using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
+using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using Microsoft.Extensions.Logging;
 
-namespace DummyApp.ApiGateway.Infrastructure.Services;
+namespace DummyApp.ApiGateway.Infrastructure.Http;
 
-public sealed class StorageServiceClient : IStorageServiceClient
+public sealed class StorageServiceClient : IStorageServiceHttpClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<StorageServiceClient> _logger;
@@ -56,16 +53,22 @@ public sealed class StorageServiceClient : IStorageServiceClient
         var response = await _httpClient.GetAsync("api/artworks", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Storage service returned {StatusCode} when fetching artworks: {Content}", response.StatusCode, content);
-            throw new InvalidOperationException($"Storage service returned {(int)response.StatusCode}: {response.ReasonPhrase}");
+            return [];
         }
 
-        var artworks = await response.Content.ReadFromJsonAsync<IEnumerable<ArtworkDto>>(new JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true
-        }, cancellationToken);
+            var artworks = await response.Content.ReadFromJsonAsync<IEnumerable<ArtworkDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
 
-        return artworks ?? Array.Empty<ArtworkDto>();
+            return artworks ?? [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service.");
+            return [];
+        }
     }
 }

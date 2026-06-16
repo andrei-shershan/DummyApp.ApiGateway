@@ -1,6 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace DummyApp.ApiGateway.Infrastructure.Services;
 
 public interface IClientCredentialsTokenCache

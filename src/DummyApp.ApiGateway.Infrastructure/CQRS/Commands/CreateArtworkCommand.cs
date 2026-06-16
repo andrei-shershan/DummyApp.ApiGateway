@@ -1,5 +1,4 @@
 using MediatR;
-using System;
 
 namespace DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 

@@ -1,29 +1,28 @@
-using DummyApp.ApiGateway.Infrastructure.Services;
-using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
+using DummyApp.ApiGateway.Infrastructure.Models;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
-namespace DummyApp.ApiGateway.WebApi.Services;
+namespace DummyApp.ApiGateway.Infrastructure.Services;
 
 public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
 {
     private readonly IMemoryCache _cache;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
+    private readonly ClientCredentialsTokenCacheOptions _options;
     private readonly ILogger<ClientCredentialsTokenCache> _logger;
 
-    // Buffer: refresh the token this many seconds before it actually expires
-    // to avoid sending an already-expired token to StorageService.
     private const int ExpiryBufferSeconds = 60;
 
     public ClientCredentialsTokenCache(
         IMemoryCache cache,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        ClientCredentialsTokenCacheOptions options,
         ILogger<ClientCredentialsTokenCache> logger)
     {
         _cache = cache;
         _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
+        _options = options;
         _logger = logger;
     }
 
@@ -60,17 +59,18 @@ public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
 
     private async Task<(string? Token, int ExpiresIn)> FetchTokenAsync(string scope, CancellationToken ct)
     {
-        var authority = _configuration["IdentityServer:Authority"]?.TrimEnd('/');
+        var authority = _options.Authority?.TrimEnd('/')
+            ?? throw new InvalidOperationException("IdentityServer authority must be configured.");
+
         var tokenEndpoint = $"{authority}/connect/token";
-        var clientSection = _configuration.GetSection("IdentityServer:OidcClients:ApiGateway");
 
         var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
         {
             Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["grant_type"] = "client_credentials",
-                ["client_id"] = clientSection["ClientId"] ?? string.Empty,
-                ["client_secret"] = clientSection["ClientSecret"] ?? string.Empty,
+                ["client_id"] = _options.ClientId ?? string.Empty,
+                ["client_secret"] = _options.ClientSecret ?? string.Empty,
                 ["scope"] = scope
             })
         };

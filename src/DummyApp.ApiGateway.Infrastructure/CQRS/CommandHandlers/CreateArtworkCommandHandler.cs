@@ -1,8 +1,5 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
-using DummyApp.ApiGateway.Infrastructure.Services;
+using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -10,13 +7,13 @@ namespace DummyApp.ApiGateway.Infrastructure.CQRS.CommandHandlers;
 
 public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkCommand, CreateArtworkCommandResult>
 {
-    private readonly IStorageServiceClient _storageServiceClient;
-    private readonly IBlobServiceClient _blobServiceClient;
+    private readonly IStorageServiceHttpClient _storageServiceClient;
+    private readonly IBlobServiceHttpClient _blobServiceClient;
     private readonly ILogger<CreateArtworkCommandHandler> _logger;
 
     public CreateArtworkCommandHandler(
-        IStorageServiceClient storageServiceClient,
-        IBlobServiceClient blobServiceClient,
+        IStorageServiceHttpClient storageServiceClient,
+        IBlobServiceHttpClient blobServiceClient,
         ILogger<CreateArtworkCommandHandler> logger)
     {
         _storageServiceClient = storageServiceClient;
@@ -32,7 +29,12 @@ public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkC
         {
             var fileName = $"{Guid.NewGuid()}.jpg";
             var blobUrl = await _blobServiceClient.UploadImageAsync(request.UploadedImage, fileName, cancellationToken);
-            _logger.LogInformation("Image uploaded to blob storage: {BlobUrl}", blobUrl);
+            if (string.IsNullOrEmpty(blobUrl))
+            {
+                _logger.LogError("Failed to upload image to blob storage.");
+                return null!;
+            }
+            
             command = request with { ImgUrl = blobUrl, UploadedImage = null };
         }
 

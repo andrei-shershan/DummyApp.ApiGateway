@@ -1,15 +1,12 @@
-using System;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using Microsoft.Extensions.Logging;
 
-namespace DummyApp.ApiGateway.Infrastructure.Services;
+namespace DummyApp.ApiGateway.Infrastructure.Http;
 
-public sealed class BlobServiceHttpClient : IBlobServiceClient
+public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<BlobServiceHttpClient> _logger;
@@ -25,8 +22,6 @@ public sealed class BlobServiceHttpClient : IBlobServiceClient
         var json = JsonSerializer.Serialize(new { base64Image, fileName });
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        _logger.LogInformation("Sending upload request to BlobService. FileName: {FileName}, JsonLength: {Length}", fileName, json.Length);
-
         var response = await _httpClient.PostAsync(
             "api/images/upload",
             content,
@@ -36,13 +31,14 @@ public sealed class BlobServiceHttpClient : IBlobServiceClient
         {
             var contentX = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError("BlobService returned {StatusCode} when uploading image: {Content}", response.StatusCode, contentX);
-            throw new InvalidOperationException($"BlobService returned {(int)response.StatusCode}: {response.ReasonPhrase}");
+            return null!;
         }
 
         var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>(cancellationToken: cancellationToken);
         if (result is null || string.IsNullOrEmpty(result.Url))
         {
-            throw new InvalidOperationException("Unexpected response from BlobService when uploading image.");
+            _logger.LogError("Unexpected response from BlobService when uploading image.");
+            return null!;
         }
 
         return result.Url;

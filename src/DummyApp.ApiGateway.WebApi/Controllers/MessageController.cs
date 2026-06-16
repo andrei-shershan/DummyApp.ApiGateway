@@ -1,4 +1,6 @@
+using DummyApp.ApiGateway.WebApi.Configuration;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace DummyApp.ApiGateway.WebApi.Controllers
 {
@@ -6,17 +8,17 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
     [Route("api/message")]
     public class MessageController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly ApiGatewaySettings _settings;
 
-        public MessageController(IConfiguration configuration)
+        public MessageController(IOptions<ApiGatewaySettings> settings)
         {
-            _configuration = configuration;
+            _settings = settings.Value;
         }
 
         [HttpGet]
         public IActionResult GetMessage()
         {
-            var message = _configuration["TestMessage"] ?? "No message configured";
+            var message = _settings.TestMessage ?? "No message configured";
             return Ok(new { message });
         }
     }

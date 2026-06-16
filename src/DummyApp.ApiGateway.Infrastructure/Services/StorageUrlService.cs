@@ -1,4 +1,4 @@
-using System;
+using DummyApp.ApiGateway.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
 
 namespace DummyApp.ApiGateway.Infrastructure.Services;
