@@ -34,25 +34,35 @@ public sealed class ArtworksController : ControllerBase
     [Authorize(Roles = "Creator")]
     public async Task<IActionResult> CreateArtwork([FromBody] CreateArtworkBodyRequest body)
     {
-        var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("CreateArtwork failed due to invalid model state: {ModelState}", ModelState);
+            return BadRequest(ModelState);
+        }
 
+        var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrWhiteSpace(creatorId))
         {
-            _logger.LogWarning("CreateArtwork failed: creatorId is missing. User claims logged above.");
+            _logger.LogError("CreateArtwork failed: creatorId is missing. User claims logged above.");
             return Forbid();
         }
 
         var command = new CreateArtworkCommand(
             body.Name,
+            body.FileName,
             body.Description,
             body.CreationDate,
-            body.ImgUrl,
-            body.SmallImgUrl,
             body.IsActive,
             body.UploadedImage,
             creatorId);
 
         var result = await _mediator.Send(command);
+        if (result is null)
+        {
+            _logger.LogError("CreateArtwork failed: result is null after sending command.");
+            return BadRequest("An error occurred while creating the artwork.");
+        }
+
         return Created($"api/artworks/{result.Id}", result);
     }
 }

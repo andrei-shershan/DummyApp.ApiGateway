@@ -1,8 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
-using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.HttpClients;
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using Microsoft.Extensions.Logging;
 
 namespace DummyApp.ApiGateway.Infrastructure.Http;
@@ -18,42 +18,39 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         _logger = logger;
     }
 
-    public async Task<CreateArtworkCommandResult> CreateArtworkAsync(CreateArtworkCommand request, CancellationToken cancellationToken)
+    public async Task<ArtworkDto?> CreateArtworkAsync(ArtworkDto artwork, CancellationToken cancellationToken)
     {
-        var dto = new
-        {
-            request.CreatorId,
-            request.Name,
-            request.Description,
-            request.CreationDate,
-            request.ImgUrl,
-            request.SmallImgUrl,
-            request.IsActive
-        };
-
-        var response = await _httpClient.PostAsJsonAsync("api/artworks", dto, cancellationToken);
+        var response = await _httpClient.PostAsJsonAsync("api/artworks", artwork, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Storage service returned {StatusCode} when creating artwork: {Content}", response.StatusCode, content);
-            throw new InvalidOperationException($"Storage service returned {(int)response.StatusCode}: {response.ReasonPhrase}");
+            _logger.LogError("Failed to create artwork via storage service. Status code: {StatusCode}", response.StatusCode);
+            return null;
         }
 
-        var created = await response.Content.ReadFromJsonAsync<CreateArtworkCommandResult>(cancellationToken: cancellationToken);
-        if (created is null)
+        try
         {
-            throw new InvalidOperationException("Unexpected response from storage service when creating artwork.");
-        }
+            var created = await response.Content.ReadFromJsonAsync<ArtworkDto>(cancellationToken: cancellationToken);
+            if (created is null)
+            {
+                _logger.LogError("Storage service returned a successful status code but the response content was null when creating artwork.");
+                return null;
+            }
 
-        return created;
+            return created;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when creating artwork.");
+            return null;
+        }
     }
 
-    public async Task<IEnumerable<ArtworkDto>> GetArtworksAsync(CancellationToken cancellationToken)
+    public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync("api/artworks", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            return [];
+            return null;
         }
 
         try
@@ -63,12 +60,12 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
                 PropertyNameCaseInsensitive = true
             }, cancellationToken);
 
-            return artworks ?? [];
+            return artworks ?? null;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to read response content from storage service.");
-            return [];
+            return null;
         }
     }
 }

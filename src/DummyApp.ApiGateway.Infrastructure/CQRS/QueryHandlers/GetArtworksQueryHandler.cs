@@ -1,8 +1,8 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.HttpClients;
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using DummyApp.ApiGateway.Infrastructure.Services;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace DummyApp.ApiGateway.Infrastructure.CQRS.QueryHandlers;
 

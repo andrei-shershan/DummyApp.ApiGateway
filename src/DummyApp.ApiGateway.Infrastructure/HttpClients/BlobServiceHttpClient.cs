@@ -17,31 +17,39 @@ public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
         _logger = logger;
     }
 
-    public async Task<string> UploadImageAsync(string base64Image, string fileName, CancellationToken cancellationToken)
+    public async Task<string?> UploadImageAsync(string base64Image, string fileName, CancellationToken cancellationToken)
     {
         var json = JsonSerializer.Serialize(new { base64Image, fileName });
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(
             "api/images/upload",
-            content,
+            httpContent,
             cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
-            var contentX = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("BlobService returned {StatusCode} when uploading image: {Content}", response.StatusCode, contentX);
-            return null!;
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("BlobService returned {StatusCode} when uploading image: {Content}", response.StatusCode, content);
+            return null;
         }
 
-        var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>(cancellationToken: cancellationToken);
-        if (result is null || string.IsNullOrEmpty(result.Url))
+        try
         {
-            _logger.LogError("Unexpected response from BlobService when uploading image.");
-            return null!;
-        }
+            var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>(cancellationToken: cancellationToken);
+            if (result is null || string.IsNullOrEmpty(result.Url))
+            {
+                _logger.LogError("Unexpected response from BlobService when uploading image.");
+                return null;
+            }
 
-        return result.Url;
+            return result.Url;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse response from BlobService when uploading image.");
+            return null;
+        }
     }
 
     private sealed record UploadImageResponse(string Url);

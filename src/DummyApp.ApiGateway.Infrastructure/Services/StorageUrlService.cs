@@ -1,5 +1,4 @@
 using DummyApp.ApiGateway.Infrastructure.Models;
-using Microsoft.Extensions.Logging;
 
 namespace DummyApp.ApiGateway.Infrastructure.Services;
 
@@ -7,11 +6,9 @@ public sealed class StorageUrlService : IStorageUrlService
 {
     private readonly string _storageUrl;
     private readonly string _containerName;
-    private readonly ILogger<StorageUrlService> _logger;
 
-    public StorageUrlService(BlobStorageSettings settings, ILogger<StorageUrlService> logger)
-    {
-        _logger = logger;
+    public StorageUrlService(BlobStorageSettings settings)
+    {   
         _storageUrl = (settings.StorageUrl ?? string.Empty).Trim().TrimEnd('/');
         _containerName = (settings.ContainerName ?? string.Empty).Trim('/');
 
@@ -24,11 +21,6 @@ public sealed class StorageUrlService : IStorageUrlService
         {
             throw new InvalidOperationException("Blob storage container name is not configured. Set BlobStorage__ContainerName.");
         }
-
-        _logger.LogInformation(
-            "StorageUrlService initialized with BlobStorage settings. StorageUrl={StorageUrl}, ContainerName={ContainerName}",
-            settings.StorageUrl,
-            settings.ContainerName);
     }
 
     public string GetBlobUrl(string blobPath)
