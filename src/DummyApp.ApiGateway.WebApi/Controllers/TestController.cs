@@ -1,5 +1,4 @@
 using DummyApp.ApiGateway.Infrastructure.Services;
-using DummyApp.ApiGateway.WebApi.Services;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

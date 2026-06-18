@@ -3,4 +3,8 @@
     <Project Path="src/DummyApp.ApiGateway.Infrastructure/DummyApp.ApiGateway.Infrastructure.csproj" />
     <Project Path="src/DummyApp.ApiGateway.WebApi/DummyApp.ApiGateway.WebApi.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DummyApp.ApiGateway.Infrastructure.Tests/DummyApp.ApiGateway.Infrastructure.Tests.csproj" />
+    <Project Path="tests/DummyApp.ApiGateway.WebApi.Tests/DummyApp.ApiGateway.WebApi.Tests.csproj" />
+  </Folder>
 </Solution>
