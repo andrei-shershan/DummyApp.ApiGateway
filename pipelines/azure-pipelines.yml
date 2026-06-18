@@ -59,8 +59,17 @@ stages:
         version: '10.0.x'
       displayName: 'Use .NET 10 SDK'
 
-    - script: dotnet test DummyApp.ApiGateway.slnx --configuration Release --no-restore
-      displayName: 'Run all tests'
+    - script: dotnet restore tests/DummyApp.ApiGateway.Infrastructure.Tests/DummyApp.ApiGateway.Infrastructure.Tests.csproj
+      displayName: 'Restore infrastructure test project packages'
+
+    - script: dotnet restore tests/DummyApp.ApiGateway.WebApi.Tests/DummyApp.ApiGateway.WebApi.Tests.csproj
+      displayName: 'Restore web api test project packages'
+
+    - script: dotnet test tests/DummyApp.ApiGateway.Infrastructure.Tests/DummyApp.ApiGateway.Infrastructure.Tests.csproj --configuration Release --no-restore
+      displayName: 'Run infrastructure unit tests'
+
+    - script: dotnet test tests/DummyApp.ApiGateway.WebApi.Tests/DummyApp.ApiGateway.WebApi.Tests.csproj --configuration Release --no-restore
+      displayName: 'Run web api unit tests'
 
 - stage: DeployTest
   displayName: 'Deploy test'
