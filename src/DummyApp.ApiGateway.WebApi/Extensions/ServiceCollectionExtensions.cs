@@ -6,6 +6,7 @@ using DummyApp.ApiGateway.Infrastructure.Services;
 using DummyApp.ApiGateway.WebApi.Configuration;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
+using BlobStorageOptionsModel = DummyApp.ApiGateway.Infrastructure.Models.BlobStorageOptions;
 
 namespace DummyApp.ApiGateway.WebApi.Extensions;
 
@@ -17,6 +18,9 @@ public static class ServiceCollectionExtensions
             .Bind(configuration)
             .ValidateDataAnnotations();
 
+        services.AddOptions<BlobStorageOptionsModel>()
+            .Bind(configuration.GetSection(nameof(ApiGatewaySettings.BlobStorage)));
+
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<ApiGatewaySettings>>().Value);
 
         return services;
@@ -25,10 +29,6 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApiGatewayServices(this IServiceCollection services, ApiGatewaySettings settings)
     {
         ValidateBlobStorageSettings(settings.BlobStorage);
-
-        services.AddSingleton(new BlobStorageSettings(
-            settings.BlobStorage.StorageUrl!, 
-            settings.BlobStorage.ContainerName!));
 
         services.AddScoped<IStorageUrlService, StorageUrlService>();
         services.AddSingleton(new ClientCredentialsTokenCacheOptions
@@ -138,7 +138,7 @@ public static class ServiceCollectionExtensions
 
         if (settings.ReverseProxy.TrustAllProxies)
         {
-            forwardedOptions.KnownNetworks.Clear();
+            forwardedOptions.KnownIPNetworks.Clear();
             forwardedOptions.KnownProxies.Clear();
         }
 
@@ -146,7 +146,7 @@ public static class ServiceCollectionExtensions
         return app;
     }
 
-    private static void ValidateBlobStorageSettings(BlobStorageOptions options)
+    private static void ValidateBlobStorageSettings(BlobStorageOptionsModel options)
     {
         if (string.IsNullOrWhiteSpace(options.StorageUrl))
         {

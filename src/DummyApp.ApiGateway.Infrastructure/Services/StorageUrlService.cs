@@ -1,4 +1,5 @@
 using DummyApp.ApiGateway.Infrastructure.Models;
+using Microsoft.Extensions.Options;
 
 namespace DummyApp.ApiGateway.Infrastructure.Services;
 
@@ -7,8 +8,9 @@ public sealed class StorageUrlService : IStorageUrlService
     private readonly string _storageUrl;
     private readonly string _containerName;
 
-    public StorageUrlService(BlobStorageSettings settings)
-    {   
+    public StorageUrlService(IOptions<BlobStorageOptions> blobStorageOptions)
+    {
+        var settings = blobStorageOptions.Value;
         _storageUrl = (settings.StorageUrl ?? string.Empty).Trim().TrimEnd('/');
         _containerName = (settings.ContainerName ?? string.Empty).Trim('/');
 

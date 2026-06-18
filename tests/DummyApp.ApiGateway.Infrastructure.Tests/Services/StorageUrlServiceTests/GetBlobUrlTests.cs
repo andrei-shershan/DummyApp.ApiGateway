@@ -1,5 +1,6 @@
 using DummyApp.ApiGateway.Infrastructure.Models;
 using DummyApp.ApiGateway.Infrastructure.Services;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace DummyApp.ApiGateway.Infrastructure.Tests.Services.StorageUrlServiceTests;
@@ -7,7 +8,11 @@ namespace DummyApp.ApiGateway.Infrastructure.Tests.Services.StorageUrlServiceTes
 public class GetBlobUrlTests
 {
     private static StorageUrlService CreateService(string storageUrl, string containerName)
-        => new StorageUrlService(new BlobStorageSettings(storageUrl, containerName));
+        => new StorageUrlService(Options.Create(new BlobStorageOptions
+        {
+            StorageUrl = storageUrl,
+            ContainerName = containerName
+        }));
 
     [Fact]
     public void GetBlobUrl_ReturnsEmptyString_WhenBlobPathIsNull()

@@ -2,7 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using DummyApp.ApiGateway.Infrastructure.Http;
+using DummyApp.ApiGateway.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -14,7 +16,12 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
     public async Task UploadImageAsync_ReturnsNull_WhenResponseIsNotSuccessful()
     {
         using var httpClient = CreateHttpClient(new HttpResponseMessage(HttpStatusCode.BadRequest));
-        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object);
+        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
+        {
+            StorageUrl = "https://blobservice.local/",
+            ContainerName = "container",
+            SecretKey = "test-secret"
+        }));
 
         var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
 
@@ -31,7 +38,12 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         };
 
         using var httpClient = CreateHttpClient(response);
-        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object);
+        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
+        {
+            StorageUrl = "https://blobservice.local/",
+            ContainerName = "container",
+            SecretKey = "test-secret"
+        }));
 
         var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
 
@@ -48,7 +60,12 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         };
 
         using var httpClient = CreateHttpClient(response);
-        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object);
+        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
+        {
+            StorageUrl = "https://blobservice.local/",
+            ContainerName = "container",
+            SecretKey = "test-secret"
+        }));
 
         var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
 
@@ -65,7 +82,12 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         };
 
         using var httpClient = CreateHttpClient(response);
-        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object);
+        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
+        {
+            StorageUrl = "https://blobservice.local/",
+            ContainerName = "container",
+            SecretKey = "test-secret"
+        }));
 
         var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
 

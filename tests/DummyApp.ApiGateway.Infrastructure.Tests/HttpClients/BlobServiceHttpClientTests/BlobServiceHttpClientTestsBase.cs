@@ -1,6 +1,8 @@
-using Microsoft.Extensions.Logging;
-using Moq;
 using DummyApp.ApiGateway.Infrastructure.Http;
+using DummyApp.ApiGateway.Infrastructure.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
 
 namespace DummyApp.ApiGateway.Infrastructure.Tests.HttpClients.BlobServiceHttpClientTests;
 
@@ -9,7 +11,15 @@ public abstract class BlobServiceHttpClientTestsBase
     protected readonly Mock<ILogger<BlobServiceHttpClient>> LoggerMock = new();
 
     protected BlobServiceHttpClient CreateClient(HttpResponseMessage response)
-        => new BlobServiceHttpClient(CreateHttpClient(response), LoggerMock.Object);
+        => new BlobServiceHttpClient(
+            CreateHttpClient(response),
+            LoggerMock.Object,
+            Options.Create(new BlobStorageOptions
+            {
+                StorageUrl = "https://blobservice.local/",
+                ContainerName = "container",
+                SecretKey = "test-secret"
+            }));
 
     protected static HttpClient CreateHttpClient(HttpResponseMessage response)
     {

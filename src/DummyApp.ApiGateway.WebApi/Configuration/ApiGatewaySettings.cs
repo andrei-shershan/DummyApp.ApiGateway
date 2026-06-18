@@ -1,3 +1,5 @@
+using DummyApp.ApiGateway.Infrastructure.Models;
+
 namespace DummyApp.ApiGateway.WebApi.Configuration;
 
 public sealed record ApiGatewaySettings
@@ -41,12 +43,6 @@ public sealed record ServicesOptions
 public sealed record ServiceEndpointOptions
 {
     public string? BaseUrl { get; init; }
-}
-
-public sealed record BlobStorageOptions
-{
-    public string? StorageUrl { get; init; }
-    public string? ContainerName { get; init; }
 }
 
 public sealed record ReverseProxyOptions
