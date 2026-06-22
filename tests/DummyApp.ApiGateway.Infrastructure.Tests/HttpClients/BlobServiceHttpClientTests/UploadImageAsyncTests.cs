@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using DummyApp.ApiGateway.Infrastructure.Http;
+using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using DummyApp.ApiGateway.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -78,7 +79,7 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
     {
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(JsonSerializer.Serialize(new { Url = "https://example.com/blob.png" }), Encoding.UTF8, "application/json")
+            Content = new StringContent(JsonSerializer.Serialize(new { Url = "https://example.com/blob.png", ThumbnailUrl = "https://example.com/blob-small.png" }), Encoding.UTF8, "application/json")
         };
 
         using var httpClient = CreateHttpClient(response);
@@ -91,7 +92,9 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
 
         var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
 
-        Assert.Equal("https://example.com/blob.png", result);
+        Assert.NotNull(result);
+        Assert.Equal("https://example.com/blob.png", result!.Url);
+        Assert.Equal("https://example.com/blob-small.png", result.ThumbnailUrl);
         VerifyNoLogs();
     }
 }

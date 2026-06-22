@@ -26,12 +26,12 @@ public sealed class GetArtworksQueryHandler : IRequestHandler<GetArtworksQuery, 
         return artworks?.Select(art =>
         {
             var imgUrl = _storageUrlService.GetBlobUrl(art.ImgUrl);
-            var smallImgUrl = _storageUrlService.GetBlobUrl(art.SmallImgUrl);
+            var thumbnailUrl = _storageUrlService.GetBlobUrl(art.ThumbnailUrl);
 
             return art with
             {
                 ImgUrl = imgUrl,
-                SmallImgUrl = smallImgUrl
+                ThumbnailUrl = thumbnailUrl
             };
         }) ?? [];
     }

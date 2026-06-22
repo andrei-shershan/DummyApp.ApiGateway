@@ -72,7 +72,7 @@ public sealed class CreateArtworkTests : ArtworksControllerTestBase
             CreationDate = DateTime.UtcNow,
             UploadDate = DateTime.UtcNow,
             ImgUrl = "https://example.com/image.jpg",
-            SmallImgUrl = "https://example.com/image-small.jpg",
+            ThumbnailUrl = "https://example.com/image-small.jpg",
             IsActive = true
         };
 
