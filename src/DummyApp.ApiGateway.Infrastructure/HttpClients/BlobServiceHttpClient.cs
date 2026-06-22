@@ -21,7 +21,7 @@ public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
         _blobServiceSecretKey = blobStorageOptions.Value.SecretKey;
     }
 
-    public async Task<string?> UploadImageAsync(string base64Image, string fileName, CancellationToken cancellationToken)
+    public async Task<ImageUploadResult?> UploadImageAsync(string base64Image, string fileName, CancellationToken cancellationToken)
     {
         var json = JsonSerializer.Serialize(new { base64Image, fileName });
         using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
@@ -45,13 +45,13 @@ public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
         try
         {
             var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>(cancellationToken: cancellationToken);
-            if (result is null || string.IsNullOrEmpty(result.Url))
+            if (result is null || string.IsNullOrEmpty(result.Url) || string.IsNullOrEmpty(result.ThumbnailUrl))
             {
                 _logger.LogError("Unexpected response from BlobService when uploading image.");
                 return null;
             }
 
-            return result.Url;
+            return new ImageUploadResult(result.Url, result.ThumbnailUrl);
         }
         catch (Exception ex)
         {
@@ -60,5 +60,5 @@ public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
         }
     }
 
-    private sealed record UploadImageResponse(string Url);
+    private sealed record UploadImageResponse(string Url, string ThumbnailUrl);
 }

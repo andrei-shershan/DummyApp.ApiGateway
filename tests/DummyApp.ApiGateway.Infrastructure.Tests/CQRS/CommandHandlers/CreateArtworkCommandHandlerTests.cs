@@ -69,7 +69,7 @@ public class HandleTests
     {
         _blobServiceClientMock
             .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))
-            .ReturnsAsync((string?)null);
+            .ReturnsAsync((ImageUploadResult?)null);
 
         var handler = CreateHandler();
         var command = new CreateArtworkCommand(
@@ -93,7 +93,7 @@ public class HandleTests
     {
         _blobServiceClientMock
             .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))
-            .ReturnsAsync("https://example.com/blob.png");
+            .ReturnsAsync(new ImageUploadResult("https://example.com/blob.png", "https://example.com/blob-small.png"));
 
         _storageServiceClientMock
             .Setup(x => x.CreateArtworkAsync(It.IsAny<ArtworkDto>(), None))
@@ -118,11 +118,11 @@ public class HandleTests
     [Fact]
     public async Task Handle_ReturnsArtwork_WhenAllStepsSucceed()
     {
-        var expected = new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", PublicName = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "https://example.com/blob.png", SmallImgUrl = "https://example.com/blob.png", IsActive = true };
+        var expected = new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", PublicName = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "https://example.com/blob.png", ThumbnailUrl = "https://example.com/blob-small.png", IsActive = true };
 
         _blobServiceClientMock
             .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))
-            .ReturnsAsync("https://example.com/blob.png");
+            .ReturnsAsync(new ImageUploadResult("https://example.com/blob.png", "https://example.com/blob-small.png"));
 
         _storageServiceClientMock
             .Setup(x => x.CreateArtworkAsync(It.IsAny<ArtworkDto>(), None))

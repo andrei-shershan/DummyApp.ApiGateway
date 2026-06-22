@@ -69,7 +69,7 @@ public class CreateArtworkAsyncTests : StorageServiceClientTestsBase
             Description = "desc",
             UploadDate = DateTime.UtcNow,
             ImgUrl = "img",
-            SmallImgUrl = "small",
+            ThumbnailUrl = "small",
             IsActive = true
         };
 

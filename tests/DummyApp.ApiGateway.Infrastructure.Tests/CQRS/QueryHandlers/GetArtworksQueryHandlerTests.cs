@@ -40,7 +40,7 @@ public class GetArtworksQueryHandlerTests
     {
         var artworks = new[]
         {
-            new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", PublicName = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", SmallImgUrl = "small/blob.png", IsActive = true }
+            new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", PublicName = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true }
         };
 
         _storageServiceClientMock
@@ -61,7 +61,7 @@ public class GetArtworksQueryHandlerTests
         Assert.Single(result);
         var mapped = result.Single();
         Assert.Equal("https://storage.example.com/blob/path.png", mapped.ImgUrl);
-        Assert.Equal("https://storage.example.com/small/blob.png", mapped.SmallImgUrl);
+        Assert.Equal("https://storage.example.com/small/blob.png", mapped.ThumbnailUrl);
         Assert.Equal(artworks[0].Id, mapped.Id);
         Assert.Equal(artworks[0].CreatorId, mapped.CreatorId);
         Assert.Equal(artworks[0].Name, mapped.Name);

@@ -10,7 +10,7 @@ public sealed record ArtworkDto
     public DateTime CreationDate { get; init; } = DateTime.UtcNow;
     public DateTime UploadDate { get; init; }
     public string ImgUrl { get; init; } = string.Empty;
-    public string SmallImgUrl { get; init; } = string.Empty;
+    public string ThumbnailUrl { get; init; } = string.Empty;
     public bool IsActive { get; init; }
 }
 
