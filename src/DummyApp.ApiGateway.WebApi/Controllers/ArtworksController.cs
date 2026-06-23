@@ -30,6 +30,19 @@ public sealed class ArtworksController : ControllerBase
         return Ok(artworks);
     }
 
+    [HttpGet("creator/{creatorId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetArtworksByCreatorId([FromRoute] string creatorId)
+    {
+        if (string.IsNullOrWhiteSpace(creatorId))
+        {
+            return BadRequest("CreatorId is required.");
+        }
+
+        var artworks = await _mediator.Send(new GetArtworksByCreatorIdQuery(creatorId));
+        return Ok(artworks);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Creator")]
     public async Task<IActionResult> CreateArtwork([FromBody] CreateArtworkBodyRequest body)

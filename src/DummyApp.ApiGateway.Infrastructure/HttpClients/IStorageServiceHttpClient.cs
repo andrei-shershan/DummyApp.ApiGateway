@@ -6,4 +6,5 @@ public interface IStorageServiceHttpClient
 {
     Task<ArtworkDto?> CreateArtworkAsync(ArtworkDto artwork, CancellationToken cancellationToken);
     Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<ArtworkDto>?> GetArtworksByCreatorIdAsync(string creatorId, CancellationToken cancellationToken);
 }
