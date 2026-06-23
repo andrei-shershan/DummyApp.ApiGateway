@@ -68,4 +68,34 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
             return null;
         }
     }
+
+    public async Task<IEnumerable<ArtworkDto>?> GetArtworksByCreatorIdAsync(string creatorId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(creatorId))
+        {
+            _logger.LogWarning("CreatorId is required to request artworks by creator.");
+            return null;
+        }
+
+        var response = await _httpClient.GetAsync($"api/artworks/creator/{Uri.EscapeDataString(creatorId)}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var artworks = await response.Content.ReadFromJsonAsync<IEnumerable<ArtworkDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return artworks ?? null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service.");
+            return null;
+        }
+    }
 }
