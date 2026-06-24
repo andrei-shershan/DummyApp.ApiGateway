@@ -38,6 +38,7 @@ public sealed record ServicesOptions
 {
     public ServiceEndpointOptions StorageService { get; init; } = new();
     public ServiceEndpointOptions BlobService { get; init; } = new();
+    public ServiceEndpointOptions IdentityService { get; init; } = new();
 }
 
 public sealed record ServiceEndpointOptions

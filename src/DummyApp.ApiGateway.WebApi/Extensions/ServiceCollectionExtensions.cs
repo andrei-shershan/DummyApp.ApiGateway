@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
     {
         ValidateBlobStorageSettings(settings.BlobStorage);
 
+        services.AddHttpContextAccessor();
         services.AddScoped<IStorageUrlService, StorageUrlService>();
         services.AddSingleton(new ClientCredentialsTokenCacheOptions
         {
@@ -69,6 +70,20 @@ public static class ServiceCollectionExtensions
                 client.BaseAddress = new Uri(blobServiceBaseUrl);
             }
         });
+
+        var identityBaseUrl = settings.Services.IdentityService.BaseUrl;
+        services.AddHttpClient<IIdentityServiceHttpClient, IdentityServiceClient>(client =>
+        {
+            if (!string.IsNullOrWhiteSpace(identityBaseUrl))
+            {
+                client.BaseAddress = new Uri(identityBaseUrl);
+            }
+        })
+        .AddHttpMessageHandler(sp => new ClientCredentialsTokenHandler(
+            sp.GetRequiredService<IClientCredentialsTokenCache>(),
+            scope: "identity.admin",
+            cacheKey: "identity",
+            sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
 
         services.AddHttpClient("storage", client =>
         {

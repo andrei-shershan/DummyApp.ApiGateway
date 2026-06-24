@@ -36,8 +36,8 @@ public sealed class ClientCredentialsTokenHandler : DelegatingHandler
         var response = await base.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogInformation("Token expired or invalid for cache '{CacheKey}'; refreshing and retrying.", _cacheKey);
-            _tokenCache.Invalidate(_cacheKey);
+            _logger.LogInformation("Token expired or invalid for cache '{CacheKey}' and scope '{Scope}'; refreshing and retrying.", _cacheKey, _scope);
+            _tokenCache.Invalidate(_cacheKey, _scope);
             accessToken = await _tokenCache.GetTokenAsync(_scope, _cacheKey, cancellationToken);
             if (string.IsNullOrWhiteSpace(accessToken))
             {

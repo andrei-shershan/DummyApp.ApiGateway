@@ -92,7 +92,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
                 // Token may have been revoked — clear the cache and retry once.
-                _tokenCache.Invalidate("storage");
+                _tokenCache.Invalidate("storage", scope);
                 accessToken = await _tokenCache.GetTokenAsync(scope, "storage");
                 if (accessToken is null)
                     return StatusCode(502, new { error = "Unable to re-acquire access token from identity." });

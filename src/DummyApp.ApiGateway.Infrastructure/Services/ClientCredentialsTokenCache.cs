@@ -51,10 +51,9 @@ public sealed class ClientCredentialsTokenCache : IClientCredentialsTokenCache
         return token;
     }
 
-    public void Invalidate(string cacheKey)
+    public void Invalidate(string cacheKey, string scope)
     {
-        _cache.Remove($"cc_token:{cacheKey}:storage.read");
-        _cache.Remove($"cc_token:{cacheKey}:storage.write");
+        _cache.Remove($"cc_token:{cacheKey}:{scope}");
     }
 
     private async Task<(string? Token, int ExpiresIn)> FetchTokenAsync(string scope, CancellationToken ct)
