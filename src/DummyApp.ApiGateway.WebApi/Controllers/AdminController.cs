@@ -1,3 +1,4 @@
+using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using MediatR;
@@ -31,4 +32,23 @@ public sealed class AdminController : ControllerBase
         var roles = await _mediator.Send(new GetRolesQuery());
         return Ok(roles);
     }
+
+    [HttpPost("invite")]
+    public async Task<IActionResult> SendInvite([FromBody] SendInviteRequest request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest("Email is required.");
+        }
+
+        var result = await _mediator.Send(new SendInviteCommand(request.Email));
+        if (!result)
+        {
+            return BadRequest("Failed to send invite.");
+        }
+
+        return Ok();
+    }
+
+    public sealed record SendInviteRequest(string Email);
 }

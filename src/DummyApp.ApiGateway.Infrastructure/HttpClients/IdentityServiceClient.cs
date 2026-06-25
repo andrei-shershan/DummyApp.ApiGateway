@@ -63,4 +63,17 @@ public sealed class IdentityServiceClient : IIdentityServiceHttpClient
             return null;
         }
     }
+
+    public async Task<bool> SaveInviteTokenAsync(string email, string token, CancellationToken cancellationToken)
+    {
+        var request = new { Email = email, Token = token };
+        var response = await _httpClient.PostAsJsonAsync("api/admin/invite", request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to save invite token in Identity service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
 }
