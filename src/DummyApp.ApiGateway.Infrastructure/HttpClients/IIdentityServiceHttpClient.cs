@@ -6,4 +6,5 @@ public interface IIdentityServiceHttpClient
 {
     Task<IEnumerable<UserDto>?> GetUsersAsync(CancellationToken cancellationToken);
     Task<IEnumerable<RoleDto>?> GetRolesAsync(CancellationToken cancellationToken);
+    Task<bool> SaveInviteTokenAsync(string email, string token, CancellationToken cancellationToken);
 }

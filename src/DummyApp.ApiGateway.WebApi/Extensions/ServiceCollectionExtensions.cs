@@ -21,6 +21,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<BlobStorageOptionsModel>()
             .Bind(configuration.GetSection(nameof(ApiGatewaySettings.BlobStorage)));
 
+        services.AddOptions<EmailServiceOptions>()
+            .Bind(configuration.GetSection(nameof(ApiGatewaySettings.EmailService)));
+
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<ApiGatewaySettings>>().Value);
 
         return services;
@@ -84,6 +87,15 @@ public static class ServiceCollectionExtensions
             scope: "identity.admin",
             cacheKey: "identity",
             sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
+
+        var emailServiceBaseUrl = settings.Services.EmailService.BaseUrl;
+        services.AddHttpClient<IEmailServiceHttpClient, EmailServiceClient>(client =>
+        {
+            if (!string.IsNullOrWhiteSpace(emailServiceBaseUrl))
+            {
+                client.BaseAddress = new Uri(emailServiceBaseUrl);
+            }
+        });
 
         services.AddHttpClient("storage", client =>
         {

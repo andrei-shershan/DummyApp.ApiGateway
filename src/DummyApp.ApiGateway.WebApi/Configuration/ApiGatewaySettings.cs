@@ -10,6 +10,8 @@ public sealed record ApiGatewaySettings
     public ServicesOptions Services { get; init; } = new();
     public BlobStorageOptions BlobStorage { get; init; } = new();
     public ReverseProxyOptions ReverseProxy { get; init; } = new();
+
+    public EmailServiceOptions EmailService { get; init; } = new();
 }
 
 public sealed record KeyVaultOptions
@@ -39,6 +41,7 @@ public sealed record ServicesOptions
     public ServiceEndpointOptions StorageService { get; init; } = new();
     public ServiceEndpointOptions BlobService { get; init; } = new();
     public ServiceEndpointOptions IdentityService { get; init; } = new();
+    public ServiceEndpointOptions EmailService { get; init; } = new();
 }
 
 public sealed record ServiceEndpointOptions
