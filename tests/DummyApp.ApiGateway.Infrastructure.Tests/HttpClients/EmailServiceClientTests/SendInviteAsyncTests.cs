@@ -67,7 +67,7 @@ public class SendInviteAsyncTests : EmailServiceClientTestsBase
         Assert.True(result);
         Assert.NotNull(capturedRequest);
         Assert.Equal("/api/email/invite?code=test-secret", capturedRequest.RequestUri?.PathAndQuery);
-        VerifyNoLogs();
+        VerifyLog(LogLevel.Information, "Successfully sent invite email to", Times.Once());
     }
 
     [Fact]
@@ -89,6 +89,6 @@ public class SendInviteAsyncTests : EmailServiceClientTestsBase
 
         Assert.True(result);
         Assert.Equal("/api/email/invite", capturedRequest?.RequestUri?.PathAndQuery);
-        VerifyNoLogs();
+        VerifyLog(LogLevel.Information, "Successfully sent invite email to", Times.Once());
     }
 }
