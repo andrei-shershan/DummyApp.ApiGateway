@@ -1,4 +1,6 @@
-using System.Net.Http.Json;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using DummyApp.ApiGateway.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,11 +33,16 @@ public sealed class InviteEmailRequest
             ? "api/email/invite"
             : $"api/email/invite?code={Uri.EscapeDataString(_emailServiceSecretKey)}";
 
-        var response = await _httpClient.PostAsJsonAsync(requestUri, request, cancellationToken);
+        var json = JsonSerializer.Serialize(request);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync(requestUri, content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Failed to send invite email to {Email}. Status code: {StatusCode}, Reason: {ReasonPhrase}", email, response.StatusCode, response.ReasonPhrase);
-            var requestBody = await response.RequestMessage?.Content?.ReadAsStringAsync(cancellationToken);
+            var requestBody = response.RequestMessage?.Content is not null
+                ? await response.RequestMessage.Content.ReadAsStringAsync(cancellationToken)
+                : null;
             _logger.LogError("Request body: {RequestBody}", requestBody);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError("Response body: {ResponseBody}", responseBody);

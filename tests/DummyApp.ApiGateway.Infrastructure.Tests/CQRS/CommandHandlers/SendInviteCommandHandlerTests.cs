@@ -27,7 +27,7 @@ public sealed class HandleTests
         var handler = CreateHandler();
         var result = await handler.Handle(new SendInviteCommand("  "), None);
 
-n        Assert.False(result);
+        Assert.False(result);
         _emailServiceHttpClientMock.VerifyNoOtherCalls();
         _identityServiceHttpClientMock.VerifyNoOtherCalls();
     }
