@@ -50,6 +50,8 @@ public sealed class InviteEmailRequest
             return false;
         }
 
+        _logger.LogInformation("Successfully sent invite email to {Email} with token {Token}", email, token);
+
         return true;
     }
 }
