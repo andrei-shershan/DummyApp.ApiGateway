@@ -53,7 +53,6 @@ public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkC
             ImgUrl = uploadResult.Url,
             IsActive = request.IsActive,
             Name = request.Name,
-            PublicName = request.Name, // Assuming public name is the same as name for simplicity.
             ThumbnailUrl = uploadResult.ThumbnailUrl,
             UploadDate = DateTime.UtcNow
         };

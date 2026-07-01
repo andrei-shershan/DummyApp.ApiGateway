@@ -18,8 +18,5 @@ public sealed class CreateArtworkBodyRequest
     public DateTime CreationDate { get; init; }
 
     [Required]
-    public bool IsActive { get; init; }
-
-    [Required]
     public string UploadedImage { get; init; } = string.Empty;
 }

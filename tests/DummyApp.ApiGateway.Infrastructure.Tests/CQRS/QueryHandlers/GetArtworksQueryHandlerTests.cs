@@ -17,15 +17,20 @@ public class GetArtworksQueryHandlerTests
 {
     private readonly Mock<IStorageServiceHttpClient> _storageServiceClientMock = new();
     private readonly Mock<IStorageUrlService> _storageUrlServiceMock = new();
+    private readonly Mock<IArtworkQueryFilterService> _artworkQueryFilterServiceMock = new();
 
     private GetArtworksQueryHandler CreateHandler()
-        => new GetArtworksQueryHandler(_storageServiceClientMock.Object, _storageUrlServiceMock.Object);
+        => new GetArtworksQueryHandler(_storageServiceClientMock.Object, _storageUrlServiceMock.Object, _artworkQueryFilterServiceMock.Object);
 
     [Fact]
     public async Task Handle_ReturnsEmptyList_WhenStorageServiceReturnsNull()
     {
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.ApplyFilter(It.IsAny<GetArtworksQuery>()))
+            .Returns(new ArtworkQueryFilter(null, null));
+
         _storageServiceClientMock
-            .Setup(x => x.GetArtworksAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetArtworksAsync(null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync((IEnumerable<ArtworkDto>?)null);
 
         var handler = CreateHandler();
@@ -40,11 +45,15 @@ public class GetArtworksQueryHandlerTests
     {
         var artworks = new[]
         {
-            new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", PublicName = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true }
+            new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true }
         };
 
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.ApplyFilter(It.IsAny<GetArtworksQuery>()))
+            .Returns(new ArtworkQueryFilter(null, null));
+
         _storageServiceClientMock
-            .Setup(x => x.GetArtworksAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetArtworksAsync(null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(artworks);
 
         _storageUrlServiceMock
@@ -65,5 +74,22 @@ public class GetArtworksQueryHandlerTests
         Assert.Equal(artworks[0].Id, mapped.Id);
         Assert.Equal(artworks[0].CreatorId, mapped.CreatorId);
         Assert.Equal(artworks[0].Name, mapped.Name);
+    }
+
+    [Fact]
+    public async Task Handle_UsesFilteredQuery_WhenArtworkQueryFilterServiceChangesIsActive()
+    {
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.ApplyFilter(It.IsAny<GetArtworksQuery>()))
+            .Returns(new ArtworkQueryFilter("creator-1", false));
+
+        _storageServiceClientMock
+            .Setup(x => x.GetArtworksAsync("creator-1", false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<ArtworkDto>());
+
+        var handler = CreateHandler();
+        await handler.Handle(new GetArtworksQuery("creator-1", true), CancellationToken.None);
+
+        _storageServiceClientMock.Verify(x => x.GetArtworksAsync("creator-1", false, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

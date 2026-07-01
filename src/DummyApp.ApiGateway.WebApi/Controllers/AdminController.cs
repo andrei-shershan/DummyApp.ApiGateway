@@ -1,3 +1,4 @@
+using DummyApp.ApiGateway.Infrastructure.Constants;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
@@ -9,7 +10,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = RoleNames.Admin)]
 public sealed class AdminController : ControllerBase
 {
     private readonly IMediator _mediator;
