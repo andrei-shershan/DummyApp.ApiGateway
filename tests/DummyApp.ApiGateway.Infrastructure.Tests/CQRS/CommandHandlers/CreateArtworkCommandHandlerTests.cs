@@ -118,7 +118,7 @@ public class HandleTests
     [Fact]
     public async Task Handle_ReturnsArtwork_WhenAllStepsSucceed()
     {
-        var expected = new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", PublicName = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "https://example.com/blob.png", ThumbnailUrl = "https://example.com/blob-small.png", IsActive = true };
+        var expected = new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "https://example.com/blob.png", ThumbnailUrl = "https://example.com/blob-small.png", IsActive = true };
 
         _blobServiceClientMock
             .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))

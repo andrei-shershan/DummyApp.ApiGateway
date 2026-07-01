@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using DummyApp.ApiGateway.Infrastructure.Constants;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using DummyApp.ApiGateway.WebApi.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -24,27 +26,29 @@ public sealed class ArtworksController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetArtworks()
+    public async Task<IActionResult> GetArtworks([FromQuery] string? creatorId, [FromQuery] bool? isActive)
     {
-        var artworks = await _mediator.Send(new GetArtworksQuery());
+        var artworks = await _mediator.Send(new GetArtworksQuery(creatorId, isActive));
         return Ok(artworks);
     }
 
-    [HttpGet("creator/{creatorId}")]
+    [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetArtworksByCreatorId([FromRoute] string creatorId)
+    [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArtworkById([FromRoute] int id, [FromQuery] bool activeOnly = true)
     {
-        if (string.IsNullOrWhiteSpace(creatorId))
+        var artwork = await _mediator.Send(new GetArtworkByIdQuery(id, activeOnly));
+        if (artwork is null)
         {
-            return BadRequest("CreatorId is required.");
+            return NotFound();
         }
 
-        var artworks = await _mediator.Send(new GetArtworksByCreatorIdQuery(creatorId));
-        return Ok(artworks);
+        return Ok(artwork);
     }
 
     [HttpPost]
-    [Authorize(Roles = "Creator")]
+    [Authorize(Roles = RoleNames.Creator)]
     public async Task<IActionResult> CreateArtwork([FromBody] CreateArtworkBodyRequest body)
     {
         if (!ModelState.IsValid)
@@ -65,7 +69,7 @@ public sealed class ArtworksController : ControllerBase
             body.FileName,
             body.Description,
             body.CreationDate,
-            body.IsActive,
+            false, // isActive is set to false by default
             body.UploadedImage,
             creatorId);
 

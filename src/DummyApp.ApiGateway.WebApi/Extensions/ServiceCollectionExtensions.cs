@@ -35,6 +35,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
         services.AddScoped<IStorageUrlService, StorageUrlService>();
+        services.AddScoped<IArtworkQueryFilterService, ArtworkQueryFilterService>();
         services.AddSingleton(new ClientCredentialsTokenCacheOptions
         {
             Authority = settings.IdentityServer.Authority,

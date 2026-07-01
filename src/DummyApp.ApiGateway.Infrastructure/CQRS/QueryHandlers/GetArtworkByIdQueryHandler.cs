@@ -6,13 +6,13 @@ using MediatR;
 
 namespace DummyApp.ApiGateway.Infrastructure.CQRS.QueryHandlers;
 
-public sealed class GetArtworksQueryHandler : IRequestHandler<GetArtworksQuery, IEnumerable<ArtworkDto>>
+public sealed class GetArtworkByIdQueryHandler : IRequestHandler<GetArtworkByIdQuery, ArtworkDto?>
 {
     private readonly IStorageServiceHttpClient _storageServiceClient;
     private readonly IStorageUrlService _storageUrlService;
     private readonly IArtworkQueryFilterService _artworkQueryFilterService;
 
-    public GetArtworksQueryHandler(
+    public GetArtworkByIdQueryHandler(
         IStorageServiceHttpClient storageServiceClient,
         IStorageUrlService storageUrlService,
         IArtworkQueryFilterService artworkQueryFilterService)
@@ -22,21 +22,19 @@ public sealed class GetArtworksQueryHandler : IRequestHandler<GetArtworksQuery, 
         _artworkQueryFilterService = artworkQueryFilterService;
     }
 
-    public async Task<IEnumerable<ArtworkDto>> Handle(GetArtworksQuery request, CancellationToken cancellationToken)
+    public async Task<ArtworkDto?> Handle(GetArtworkByIdQuery request, CancellationToken cancellationToken)
     {
-        var queryFilter = _artworkQueryFilterService.ApplyFilter(request);
-        var artworks = await _storageServiceClient.GetArtworksAsync(queryFilter.CreatorId, queryFilter.IsActive, cancellationToken);
-
-        return artworks?.Select(art =>
+        var activeOnly = _artworkQueryFilterService.GetArtworkByIdActiveOnly();
+        var artwork = await _storageServiceClient.GetArtworkByIdAsync(request.Id, activeOnly, cancellationToken);
+        if (artwork is null)
         {
-            var imgUrl = _storageUrlService.GetBlobUrl(art.ImgUrl);
-            var thumbnailUrl = _storageUrlService.GetBlobUrl(art.ThumbnailUrl);
+            return null;
+        }
 
-            return art with
-            {
-                ImgUrl = imgUrl,
-                ThumbnailUrl = thumbnailUrl
-            };
-        }) ?? Array.Empty<ArtworkDto>();
+        return artwork with
+        {
+            ImgUrl = _storageUrlService.GetBlobUrl(artwork.ImgUrl),
+            ThumbnailUrl = _storageUrlService.GetBlobUrl(artwork.ThumbnailUrl)
+        };
     }
 }

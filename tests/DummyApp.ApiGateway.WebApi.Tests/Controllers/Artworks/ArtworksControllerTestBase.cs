@@ -31,7 +31,6 @@ public abstract class ArtworksControllerTestBase
         Description = "Description",
         FileName = "file.png",
         CreationDate = DateTime.UtcNow,
-        IsActive = true,
         UploadedImage = "base64image"
     };
 

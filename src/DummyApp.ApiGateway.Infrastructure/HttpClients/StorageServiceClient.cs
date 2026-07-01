@@ -47,7 +47,12 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
 
     public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(CancellationToken cancellationToken)
     {
-        var response = await _httpClient.GetAsync("api/artworks", cancellationToken);
+        return await GetArtworksAsync(null, null, cancellationToken);
+    }
+
+    public async Task<ArtworkDto?> GetArtworkByIdAsync(int id, bool activeOnly, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/artworks/{id}?activeOnly={activeOnly.ToString().ToLowerInvariant()}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             return null;
@@ -55,12 +60,12 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
 
         try
         {
-            var artworks = await response.Content.ReadFromJsonAsync<IEnumerable<ArtworkDto>>(new JsonSerializerOptions
+            var artwork = await response.Content.ReadFromJsonAsync<ArtworkDto>(new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             }, cancellationToken);
 
-            return artworks ?? null;
+            return artwork;
         }
         catch (Exception ex)
         {
@@ -69,15 +74,27 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<IEnumerable<ArtworkDto>?> GetArtworksByCreatorIdAsync(string creatorId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool? isActive, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(creatorId))
+        var queryParams = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(creatorId))
         {
-            _logger.LogWarning("CreatorId is required to request artworks by creator.");
-            return null;
+            queryParams.Add($"creatorId={Uri.EscapeDataString(creatorId)}");
         }
 
-        var response = await _httpClient.GetAsync($"api/artworks/creator/{Uri.EscapeDataString(creatorId)}", cancellationToken);
+        if (isActive.HasValue)
+        {
+            queryParams.Add($"isActive={isActive.Value.ToString().ToLowerInvariant()}");
+        }
+
+        var requestUri = "api/artworks";
+        if (queryParams.Count > 0)
+        {
+            requestUri += "?" + string.Join("&", queryParams);
+        }
+
+        var response = await _httpClient.GetAsync(requestUri, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             return null;

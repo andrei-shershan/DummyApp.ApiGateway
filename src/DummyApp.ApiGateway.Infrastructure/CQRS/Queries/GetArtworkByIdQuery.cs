@@ -3,4 +3,4 @@ using MediatR;
 
 namespace DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 
-public sealed record GetArtworksByCreatorIdQuery(string CreatorId) : IRequest<IEnumerable<ArtworkDto>>;
+public sealed record GetArtworkByIdQuery(int Id, bool ActiveOnly = true) : IRequest<ArtworkDto?>;

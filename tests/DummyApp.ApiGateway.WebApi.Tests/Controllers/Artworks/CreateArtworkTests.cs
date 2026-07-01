@@ -67,7 +67,6 @@ public sealed class CreateArtworkTests : ArtworksControllerTestBase
             Id = 42,
             CreatorId = "creator-123",
             Name = "Name",
-            PublicName = "Name",
             Description = "Description",
             CreationDate = DateTime.UtcNow,
             UploadDate = DateTime.UtcNow,
