@@ -82,4 +82,32 @@ public sealed class ArtworksController : ControllerBase
 
         return Created($"api/artworks/{result.Id}", result);
     }
+
+    [HttpPut("{id}/active")]
+    [Authorize(Roles = RoleNames.Creator)]
+    [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateArtworkActive([FromRoute] int id, [FromBody] UpdateArtworkIsActiveRequest body)
+    {
+        if (body is null)
+        {
+            _logger.LogWarning("UpdateArtworkActive failed due to null request body.");
+            return BadRequest("Request body is required.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("UpdateArtworkActive failed due to invalid model state: {ModelState}", ModelState);
+            return BadRequest(ModelState);
+        }
+
+        var result = await _mediator.Send(new UpdateArtworkIsActiveCommand(id, body.IsActive.Value));
+        if (result is null)
+        {
+            _logger.LogError("UpdateArtworkActive failed: result is null after sending command.");
+            return BadRequest("An error occurred while updating artwork active state.");
+        }
+
+        return Ok(result);
+    }
 }
