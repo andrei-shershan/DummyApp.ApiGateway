@@ -32,7 +32,7 @@ public sealed class ArtworkQueryFilterService : IArtworkQueryFilterService
         if (user.IsInRole(RoleNames.Creator))
         {
             var currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(currentUserId) && string.Equals(creatorId, currentUserId, StringComparison.OrdinalIgnoreCase))
+            if (creatorId is null || (!string.IsNullOrWhiteSpace(currentUserId) && string.Equals(creatorId, currentUserId, StringComparison.OrdinalIgnoreCase)))
             {
                 return new ArtworkQueryFilter(creatorId, request.IsActive);
             }
