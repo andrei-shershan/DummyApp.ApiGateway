@@ -45,6 +45,37 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
+    public async Task<ArtworkDto?> UpdateArtworkIsActiveAsync(int id, bool isActive, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/artworks/{id}/active", new { IsActive = isActive }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to update artwork active state via storage service. Status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
+
+        try
+        {
+            var updatedArtwork = await response.Content.ReadFromJsonAsync<ArtworkDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            if (updatedArtwork is null)
+            {
+                _logger.LogError("Storage service returned a successful status code but the response content was null when updating artwork active state.");
+                return null;
+            }
+
+            return updatedArtwork;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when updating artwork active state.");
+            return null;
+        }
+    }
+
     public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(CancellationToken cancellationToken)
     {
         return await GetArtworksAsync(null, null, cancellationToken);
