@@ -76,4 +76,28 @@ public sealed class IdentityServiceClient : IIdentityServiceHttpClient
 
         return true;
     }
+
+    public async Task<UserDto?> UpdateUserActiveStateAsync(string userId, bool isActive, CancellationToken cancellationToken)
+    {
+        var request = new { IsActive = isActive };
+        var response = await _httpClient.PutAsJsonAsync($"api/admin/users/{userId}/active", request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to update active state for user {UserId} in Identity service. Status code: {StatusCode}", userId, response.StatusCode);
+            return null;
+        }
+
+        try
+        {
+            return await response.Content.ReadFromJsonAsync<UserDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read update user active state response from Identity service for user {UserId}.", userId);
+            return null;
+        }
+    }
 }
