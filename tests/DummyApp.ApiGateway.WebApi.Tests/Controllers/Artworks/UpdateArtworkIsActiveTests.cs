@@ -62,6 +62,7 @@ public sealed class UpdateArtworkIsActiveTests : ArtworksControllerTestBase
     [Fact]
     public async Task UpdateArtworkActive_ReturnsBadRequest_WhenCommandReturnsNull()
     {
+        var artworkId = Guid.NewGuid();
         var mediatorMock = new Mock<IMediator>();
         mediatorMock.Setup(m => m.Send(It.IsAny<UpdateArtworkIsActiveCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ArtworkDto?)null);
