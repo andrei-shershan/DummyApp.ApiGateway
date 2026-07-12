@@ -64,7 +64,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         {
             new ArtworkDto
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 CreatorId = "creator",
                 Name = "name",
                 Description = "desc",
@@ -96,7 +96,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         {
             new ArtworkDto
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 CreatorId = "creator-1",
                 Name = "name",
                 Description = "desc",
@@ -174,7 +174,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         {
             new ArtworkDto
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 CreatorId = "creator-1",
                 Name = "name",
                 Description = "desc",

@@ -20,7 +20,8 @@ public sealed class UpdateArtworkIsActiveTests : ArtworksControllerTestBase
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock, CreateUserWithId("creator-1"));
 
-        var result = await controller.UpdateArtworkActive(1, null!);
+        var artworkId = Guid.NewGuid();
+        var result = await controller.UpdateArtworkActive(artworkId, null!);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Request body is required.", badRequest.Value);
@@ -32,7 +33,7 @@ public sealed class UpdateArtworkIsActiveTests : ArtworksControllerTestBase
     {
         var expectedArtwork = new ArtworkDto
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             CreatorId = "creator-1",
             Name = "Artwork",
             Description = "Description",
@@ -44,17 +45,18 @@ public sealed class UpdateArtworkIsActiveTests : ArtworksControllerTestBase
         };
 
         var mediatorMock = new Mock<IMediator>();
-        mediatorMock.Setup(m => m.Send(It.Is<UpdateArtworkIsActiveCommand>(c => c.ArtworkId == 1 && c.IsActive == true), It.IsAny<CancellationToken>()))
+        var artworkId = Guid.NewGuid();
+        mediatorMock.Setup(m => m.Send(It.Is<UpdateArtworkIsActiveCommand>(c => c.ArtworkId == artworkId && c.IsActive == true), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedArtwork);
 
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock, CreateUserWithId("creator-1"));
 
-        var result = await controller.UpdateArtworkActive(1, new UpdateArtworkIsActiveRequest { IsActive = true });
+        var result = await controller.UpdateArtworkActive(artworkId, new UpdateArtworkIsActiveRequest { IsActive = true });
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(expectedArtwork, okResult.Value);
-        mediatorMock.Verify(m => m.Send(It.Is<UpdateArtworkIsActiveCommand>(c => c.ArtworkId == 1 && c.IsActive == true), It.IsAny<CancellationToken>()), Times.Once);
+        mediatorMock.Verify(m => m.Send(It.Is<UpdateArtworkIsActiveCommand>(c => c.ArtworkId == artworkId && c.IsActive == true), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -67,7 +69,7 @@ public sealed class UpdateArtworkIsActiveTests : ArtworksControllerTestBase
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock, CreateUserWithId("creator-1"));
 
-        var result = await controller.UpdateArtworkActive(1, new UpdateArtworkIsActiveRequest { IsActive = false });
+        var result = await controller.UpdateArtworkActive(artworkId, new UpdateArtworkIsActiveRequest { IsActive = false });
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("An error occurred while updating artwork active state.", badRequest.Value);

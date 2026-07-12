@@ -21,7 +21,7 @@ public sealed class UpdateArtworkIsActiveCommandHandler : IRequestHandler<Update
 
     public async Task<ArtworkDto?> Handle(UpdateArtworkIsActiveCommand request, CancellationToken cancellationToken)
     {
-        if (request.ArtworkId <= 0)
+        if (request.ArtworkId == Guid.Empty)
         {
             _logger.LogError("Invalid artwork id {ArtworkId} supplied for active state update.", request.ArtworkId);
             return null;

@@ -24,21 +24,22 @@ public sealed class HandleTests
     public async Task Handle_ReturnsNull_WhenArtworkIdIsInvalid()
     {
         var handler = CreateHandler();
-        var command = new UpdateArtworkIsActiveCommand(0, true);
+        var command = new UpdateArtworkIsActiveCommand(Guid.Empty, true);
 
         var result = await handler.Handle(command, None);
 
         Assert.Null(result);
-        _loggerMock.VerifyLog(LogLevel.Error, "Invalid artwork id 0 supplied for active state update.", Times.Once());
+        _loggerMock.VerifyLog(LogLevel.Error, "Invalid artwork id 00000000-0000-0000-0000-000000000000 supplied for active state update.", Times.Once());
         _storageServiceClientMock.VerifyNoOtherCalls();
     }
 
     [Fact]
     public async Task Handle_CallsStorageService_WhenArtworkIdIsValid()
     {
+        var artworkId = Guid.NewGuid();
         var expected = new ArtworkDto
         {
-            Id = 1,
+            Id = artworkId,
             CreatorId = "creator",
             Name = "Artwork",
             Description = "Description",
@@ -50,15 +51,15 @@ public sealed class HandleTests
         };
 
         _storageServiceClientMock
-            .Setup(x => x.UpdateArtworkIsActiveAsync(1, true, None))
+            .Setup(x => x.UpdateArtworkIsActiveAsync(artworkId, true, None))
             .ReturnsAsync(expected);
 
         var handler = CreateHandler();
-        var command = new UpdateArtworkIsActiveCommand(1, true);
+        var command = new UpdateArtworkIsActiveCommand(artworkId, true);
 
         var result = await handler.Handle(command, None);
 
         Assert.Equal(expected, result);
-        _storageServiceClientMock.Verify(x => x.UpdateArtworkIsActiveAsync(1, true, None), Times.Once());
+        _storageServiceClientMock.Verify(x => x.UpdateArtworkIsActiveAsync(artworkId, true, None), Times.Once());
     }
 }

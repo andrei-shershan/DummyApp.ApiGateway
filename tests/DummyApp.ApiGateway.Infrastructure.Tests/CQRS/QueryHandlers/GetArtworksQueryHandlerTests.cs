@@ -45,7 +45,7 @@ public class GetArtworksQueryHandlerTests
     {
         var artworks = new[]
         {
-            new ArtworkDto { Id = 1, CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true }
+            new ArtworkDto { Id = Guid.NewGuid(), CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true }
         };
 
         _artworkQueryFilterServiceMock
