@@ -2,6 +2,7 @@ using DummyApp.ApiGateway.Infrastructure.Constants;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
+using DummyApp.ApiGateway.WebApi.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,6 +50,23 @@ public sealed class AdminController : ControllerBase
         }
 
         return Ok();
+    }
+
+    [HttpPut("users/{id}/active")]
+    public async Task<IActionResult> UpdateUserActiveState([FromRoute] string id, [FromBody] UpdateUserActiveStateRequest request)
+    {
+        if (request is null)
+        {
+            return BadRequest("Request body is required.");
+        }
+
+        var result = await _mediator.Send(new UpdateUserActiveStateCommand(id, request.IsActive.Value));
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
     }
 
     public sealed record SendInviteRequest(string Email);
