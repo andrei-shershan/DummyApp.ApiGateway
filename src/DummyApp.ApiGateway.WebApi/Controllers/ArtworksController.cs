@@ -36,7 +36,7 @@ public sealed class ArtworksController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetArtworkById([FromRoute] int id, [FromQuery] bool activeOnly = true)
+    public async Task<IActionResult> GetArtworkById([FromRoute] Guid id, [FromQuery] bool activeOnly = true)
     {
         var artwork = await _mediator.Send(new GetArtworkByIdQuery(id, activeOnly));
         if (artwork is null)
@@ -87,7 +87,7 @@ public sealed class ArtworksController : ControllerBase
     [Authorize(Roles = RoleNames.Creator)]
     [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateArtworkActive([FromRoute] int id, [FromBody] UpdateArtworkIsActiveRequest body)
+    public async Task<IActionResult> UpdateArtworkActive([FromRoute] Guid id, [FromBody] UpdateArtworkIsActiveRequest body)
     {
         if (body is null)
         {

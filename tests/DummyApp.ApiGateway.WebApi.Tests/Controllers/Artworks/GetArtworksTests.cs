@@ -19,7 +19,7 @@ public sealed class GetArtworksTests : ArtworksControllerTestBase
     {
         var expectedArtworks = new[]
         {
-            new ArtworkDto { Id = 1, Name = "Artwork #1", CreatorId = "creator-1", Description = "Desc", CreationDate = new DateTime(2024, 1, 1), UploadDate = DateTime.UtcNow, ImgUrl = "img", ThumbnailUrl = "small", IsActive = true }
+            new ArtworkDto { Id = Guid.NewGuid(), Name = "Artwork #1", CreatorId = "creator-1", Description = "Desc", CreationDate = new DateTime(2024, 1, 1), UploadDate = DateTime.UtcNow, ImgUrl = "img", ThumbnailUrl = "small", IsActive = true }
         };
 
         var mediatorMock = new Mock<IMediator>();
@@ -42,7 +42,7 @@ public sealed class GetArtworksTests : ArtworksControllerTestBase
         var creatorId = "creator-1";
         var expectedArtworks = new[]
         {
-            new ArtworkDto { Id = 1, Name = "Artwork #1", CreatorId = creatorId, Description = "Desc", CreationDate = new DateTime(2024, 1, 1), UploadDate = DateTime.UtcNow, ImgUrl = "img", ThumbnailUrl = "small", IsActive = true }
+            new ArtworkDto { Id = Guid.NewGuid(), Name = "Artwork #1", CreatorId = creatorId, Description = "Desc", CreationDate = new DateTime(2024, 1, 1), UploadDate = DateTime.UtcNow, ImgUrl = "img", ThumbnailUrl = "small", IsActive = true }
         };
 
         var mediatorMock = new Mock<IMediator>();

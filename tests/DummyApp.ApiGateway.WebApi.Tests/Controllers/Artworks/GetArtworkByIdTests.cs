@@ -16,7 +16,7 @@ public sealed class GetArtworkByIdTests : ArtworksControllerTestBase
     {
         var expectedArtwork = new ArtworkDto
         {
-            Id = 123,
+            Id = Guid.NewGuid(),
             CreatorId = "creator-1",
             Name = "Artwork",
             Description = "Description",
@@ -51,9 +51,10 @@ public sealed class GetArtworkByIdTests : ArtworksControllerTestBase
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock);
 
-        var result = await controller.GetArtworkById(999);
+        var missingArtworkId = Guid.NewGuid();
+        var result = await controller.GetArtworkById(missingArtworkId);
 
         Assert.IsType<NotFoundResult>(result);
-        mediatorMock.Verify(m => m.Send(It.Is<GetArtworkByIdQuery>(q => q.Id == 999), It.IsAny<CancellationToken>()), Times.Once);
+        mediatorMock.Verify(m => m.Send(It.Is<GetArtworkByIdQuery>(q => q.Id == missingArtworkId), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

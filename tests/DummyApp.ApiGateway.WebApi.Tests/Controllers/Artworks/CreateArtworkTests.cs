@@ -64,7 +64,7 @@ public sealed class CreateArtworkTests : ArtworksControllerTestBase
     {
         var expectedArtwork = new ArtworkDto
         {
-            Id = 42,
+            Id = Guid.NewGuid(),
             CreatorId = "creator-123",
             Name = "Name",
             Description = "Description",

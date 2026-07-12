@@ -25,11 +25,11 @@ public class GetArtworkByIdQueryHandlerTests
             .Returns(true);
 
         _storageServiceClientMock
-            .Setup(x => x.GetArtworkByIdAsync(It.IsAny<int>(), true, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetArtworkByIdAsync(It.IsAny<Guid>(), true, It.IsAny<CancellationToken>()))
             .ReturnsAsync((ArtworkDto?)null);
 
         var handler = CreateHandler();
-        var result = await handler.Handle(new GetArtworkByIdQuery(1), CancellationToken.None);
+        var result = await handler.Handle(new GetArtworkByIdQuery(Guid.NewGuid()), CancellationToken.None);
 
         Assert.Null(result);
     }
@@ -39,7 +39,7 @@ public class GetArtworkByIdQueryHandlerTests
     {
         var artwork = new ArtworkDto
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             CreatorId = "creator",
             Name = "Test",
             Description = "desc",

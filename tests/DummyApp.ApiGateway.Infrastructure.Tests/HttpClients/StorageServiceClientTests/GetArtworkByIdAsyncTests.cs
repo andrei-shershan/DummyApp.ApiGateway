@@ -15,10 +15,11 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
     [Fact]
     public async Task GetArtworkByIdAsync_ReturnsNull_WhenResponseIsNotSuccessful()
     {
+        var artworkId = Guid.NewGuid();
         using var httpClient = CreateHttpClient(new HttpResponseMessage(HttpStatusCode.NotFound));
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworkByIdAsync(1, true, CancellationToken.None);
+        var result = await client.GetArtworkByIdAsync(artworkId, true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyNoLogs();
@@ -27,6 +28,7 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
     [Fact]
     public async Task GetArtworkByIdAsync_ReturnsNull_WhenResponseContentIsNull()
     {
+        var artworkId = Guid.NewGuid();
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = JsonContent.Create<ArtworkDto>(null)
@@ -35,7 +37,7 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworkByIdAsync(1, true, CancellationToken.None);
+        var result = await client.GetArtworkByIdAsync(artworkId, true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyNoLogs();
@@ -44,6 +46,7 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
     [Fact]
     public async Task GetArtworkByIdAsync_ReturnsNull_WhenResponseIsInvalidJson()
     {
+        var artworkId = Guid.NewGuid();
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent("not-json", Encoding.UTF8, "application/json")
@@ -52,7 +55,7 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworkByIdAsync(1, true, CancellationToken.None);
+        var result = await client.GetArtworkByIdAsync(artworkId, true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyLog(LogLevel.Error, "Failed to read response content from storage service.", Times.Once());
@@ -61,9 +64,10 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
     [Fact]
     public async Task GetArtworkByIdAsync_ReturnsArtwork_WhenResponseIsSuccessful()
     {
+        var artworkId = Guid.NewGuid();
         var artwork = new ArtworkDto
         {
-            Id = 1,
+            Id = artworkId,
             CreatorId = "creator",
             Name = "name",
             Description = "desc",
@@ -81,7 +85,7 @@ public class GetArtworkByIdAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworkByIdAsync(1, true, CancellationToken.None);
+        var result = await client.GetArtworkByIdAsync(artworkId, true, CancellationToken.None);
 
         Assert.Equal(artwork, result);
         VerifyNoLogs();

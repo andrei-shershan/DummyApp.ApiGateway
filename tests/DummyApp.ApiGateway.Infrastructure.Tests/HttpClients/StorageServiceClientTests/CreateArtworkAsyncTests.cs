@@ -62,7 +62,7 @@ public class CreateArtworkAsyncTests : StorageServiceClientTestsBase
     {
         var artwork = new ArtworkDto
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             CreatorId = "creator",
             Name = "name",
             Description = "desc",

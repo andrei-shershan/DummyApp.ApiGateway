@@ -45,7 +45,7 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<ArtworkDto?> UpdateArtworkIsActiveAsync(int id, bool isActive, CancellationToken cancellationToken)
+    public async Task<ArtworkDto?> UpdateArtworkIsActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken)
     {
         var response = await _httpClient.PutAsJsonAsync($"api/artworks/{id}/active", new { IsActive = isActive }, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -81,7 +81,7 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         return await GetArtworksAsync(null, null, cancellationToken);
     }
 
-    public async Task<ArtworkDto?> GetArtworkByIdAsync(int id, bool activeOnly, CancellationToken cancellationToken)
+    public async Task<ArtworkDto?> GetArtworkByIdAsync(Guid id, bool activeOnly, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync($"api/artworks/{id}?activeOnly={activeOnly.ToString().ToLowerInvariant()}", cancellationToken);
         if (!response.IsSuccessStatusCode)
