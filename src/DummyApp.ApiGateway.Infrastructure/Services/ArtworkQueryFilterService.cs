@@ -21,24 +21,19 @@ public sealed class ArtworkQueryFilterService : IArtworkQueryFilterService
     {
         if (requestedActiveOnly)
         {
-            Console.WriteLine("Requested active only is true, returning true.");
             return true;
         }
 
         var user = _httpContextAccessor.HttpContext?.User;
         if (user is null || user.Identity?.IsAuthenticated != true)
         {
-            Console.WriteLine("User is anonymous, returning true for active only.");
             return true;
         }
 
         if (user.IsInRole(RoleNames.Admin) || user.IsInRole(RoleNames.Creator))
         {
-            Console.WriteLine("User is Admin or Creator, returning true for active only.");
             return false;
         }
-
-        Console.WriteLine("User is authenticated but not Admin or Creator, returning true for active only.");
 
         return true;
     }
