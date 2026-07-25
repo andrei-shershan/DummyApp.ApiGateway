@@ -138,4 +138,53 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
             return null;
         }
     }
+
+    public async Task<IEnumerable<SeriesDto>?> GetSeriesAsync(string creatorId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/series?creatorId={Uri.EscapeDataString(creatorId)}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var series = await response.Content.ReadFromJsonAsync<IEnumerable<SeriesDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return series;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service.");
+            return null;
+        }
+    }
+
+    public async Task<SeriesDto?> CreateSeriesAsync(string name, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/series", new { Name = name }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to create series via storage service. Status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
+
+        try
+        {
+            var series = await response.Content.ReadFromJsonAsync<SeriesDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return series;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when creating series.");
+            return null;
+        }
+    }
 }

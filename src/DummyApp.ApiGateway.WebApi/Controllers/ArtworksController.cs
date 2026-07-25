@@ -71,6 +71,7 @@ public sealed class ArtworksController : ControllerBase
             body.CreationDate,
             false, // isActive is set to false by default
             body.UploadedImage,
+            body.SeriesName,
             creatorId);
 
         var result = await _mediator.Send(command);
@@ -81,6 +82,54 @@ public sealed class ArtworksController : ControllerBase
         }
 
         return Created($"api/artworks/{result.Id}", result);
+    }
+
+    [HttpGet("series")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IEnumerable<SeriesDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSeries([FromQuery] string creatorId)
+    {
+        if (string.IsNullOrWhiteSpace(creatorId))
+        {
+            return BadRequest("creatorId is required.");
+        }
+
+        var series = await _mediator.Send(new GetArtworkSeriesQuery(creatorId));
+        return Ok(series);
+    }
+
+    [HttpPost("series")]
+    [Authorize(Roles = RoleNames.Creator)]
+    [ProducesResponseType(typeof(SeriesDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateSeries([FromBody] CreateSeriesRequest body)
+    {
+        if (body is null)
+        {
+            return BadRequest("Series request is required.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("CreateSeries failed due to invalid model state: {ModelState}", ModelState);
+            return BadRequest(ModelState);
+        }
+
+        var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(creatorId))
+        {
+            _logger.LogError("CreateSeries failed: creatorId is missing. User claims logged above.");
+            return Forbid();
+        }
+
+        var result = await _mediator.Send(new CreateArtworkSeriesCommand(body.Name, creatorId));
+        if (result is null)
+        {
+            _logger.LogError("CreateSeries failed: result is null after sending command.");
+            return BadRequest("An error occurred while creating the series.");
+        }
+
+        return Created($"api/artworks/series?creatorId={creatorId}", result);
     }
 
     [HttpPut("{id}/active")]

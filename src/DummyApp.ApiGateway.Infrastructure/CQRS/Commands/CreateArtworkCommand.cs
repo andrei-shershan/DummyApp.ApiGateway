@@ -10,4 +10,5 @@ public sealed record CreateArtworkCommand(
     DateTime CreationDate,
     bool IsActive,
     string UploadedImage,
+    string? SeriesName,
     string CreatorId) : IRequest<ArtworkDto?>;
