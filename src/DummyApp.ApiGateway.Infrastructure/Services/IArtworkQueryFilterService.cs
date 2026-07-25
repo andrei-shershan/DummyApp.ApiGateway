@@ -1,9 +1,11 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 
 namespace DummyApp.ApiGateway.Infrastructure.Services;
 
 public interface IArtworkQueryFilterService
 {
-    ArtworkQueryFilter ApplyFilter(GetArtworksQuery request);
-    bool GetArtworkByIdActiveOnly();
+    bool ShouldRequestActiveOnly(bool requestedActiveOnly);
+    bool CanAccessArtworkById(ArtworkDto artwork);
+    bool AdminOrCreatorsArtwork(ArtworkDto artwork);
 }

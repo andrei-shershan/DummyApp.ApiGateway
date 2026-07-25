@@ -26,11 +26,11 @@ public class GetArtworksQueryHandlerTests
     public async Task Handle_ReturnsEmptyList_WhenStorageServiceReturnsNull()
     {
         _artworkQueryFilterServiceMock
-            .Setup(x => x.ApplyFilter(It.IsAny<GetArtworksQuery>()))
-            .Returns(new ArtworkQueryFilter(null, null));
+            .Setup(x => x.ShouldRequestActiveOnly(true))
+            .Returns(true);
 
         _storageServiceClientMock
-            .Setup(x => x.GetArtworksAsync(null, null, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetArtworksAsync(null, true, It.IsAny<CancellationToken>()))
             .ReturnsAsync((IEnumerable<ArtworkDto>?)null);
 
         var handler = CreateHandler();
@@ -43,18 +43,19 @@ public class GetArtworksQueryHandlerTests
     [Fact]
     public async Task Handle_ReturnsArtworkWithNormalizedUrls_WhenStorageServiceReturnsArtworks()
     {
-        var artworks = new[]
-        {
-            new ArtworkDto { Id = Guid.NewGuid(), CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true }
-        };
+        var artwork = new ArtworkDto { Id = Guid.NewGuid(), CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true };
 
         _artworkQueryFilterServiceMock
-            .Setup(x => x.ApplyFilter(It.IsAny<GetArtworksQuery>()))
-            .Returns(new ArtworkQueryFilter(null, null));
+            .Setup(x => x.ShouldRequestActiveOnly(true))
+            .Returns(true);
 
         _storageServiceClientMock
-            .Setup(x => x.GetArtworksAsync(null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(artworks);
+            .Setup(x => x.GetArtworksAsync(null, true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { artwork });
+
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.CanAccessArtworkById(artwork))
+            .Returns(true);
 
         _storageUrlServiceMock
             .Setup(x => x.GetBlobUrl("blob/path.png"))
@@ -71,17 +72,17 @@ public class GetArtworksQueryHandlerTests
         var mapped = result.Single();
         Assert.Equal("https://storage.example.com/blob/path.png", mapped.ImgUrl);
         Assert.Equal("https://storage.example.com/small/blob.png", mapped.ThumbnailUrl);
-        Assert.Equal(artworks[0].Id, mapped.Id);
-        Assert.Equal(artworks[0].CreatorId, mapped.CreatorId);
-        Assert.Equal(artworks[0].Name, mapped.Name);
+        Assert.Equal(artwork.Id, mapped.Id);
+        Assert.Equal(artwork.CreatorId, mapped.CreatorId);
+        Assert.Equal(artwork.Name, mapped.Name);
     }
 
     [Fact]
     public async Task Handle_UsesFilteredQuery_WhenArtworkQueryFilterServiceChangesIsActive()
     {
         _artworkQueryFilterServiceMock
-            .Setup(x => x.ApplyFilter(It.IsAny<GetArtworksQuery>()))
-            .Returns(new ArtworkQueryFilter("creator-1", false));
+            .Setup(x => x.ShouldRequestActiveOnly(true))
+            .Returns(false);
 
         _storageServiceClientMock
             .Setup(x => x.GetArtworksAsync("creator-1", false, It.IsAny<CancellationToken>()))
@@ -91,5 +92,42 @@ public class GetArtworksQueryHandlerTests
         await handler.Handle(new GetArtworksQuery("creator-1", true), CancellationToken.None);
 
         _storageServiceClientMock.Verify(x => x.GetArtworksAsync("creator-1", false, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_FiltersOutArtworks_WhenCanAccessArtworkByIdReturnsFalse()
+    {
+        var accessibleArtwork = new ArtworkDto { Id = Guid.NewGuid(), CreatorId = "creator", ImgUrl = "blob/path.png", ThumbnailUrl = "small/blob.png", IsActive = true };
+        var blockedArtwork = new ArtworkDto { Id = Guid.NewGuid(), CreatorId = "creator", ImgUrl = "blob/path-2.png", ThumbnailUrl = "small/blob-2.png", IsActive = true };
+
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.ShouldRequestActiveOnly(true))
+            .Returns(true);
+
+        _storageServiceClientMock
+            .Setup(x => x.GetArtworksAsync(null, true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { accessibleArtwork, blockedArtwork });
+
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.CanAccessArtworkById(accessibleArtwork))
+            .Returns(true);
+
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.CanAccessArtworkById(blockedArtwork))
+            .Returns(false);
+
+        _storageUrlServiceMock
+            .Setup(x => x.GetBlobUrl("blob/path.png"))
+            .Returns("https://storage.example.com/blob/path.png");
+
+        _storageUrlServiceMock
+            .Setup(x => x.GetBlobUrl("small/blob.png"))
+            .Returns("https://storage.example.com/small/blob.png");
+
+        var handler = CreateHandler();
+        var result = await handler.Handle(new GetArtworksQuery(), CancellationToken.None);
+
+        Assert.Single(result);
+        Assert.Equal(accessibleArtwork.Id, result.Single().Id);
     }
 }
