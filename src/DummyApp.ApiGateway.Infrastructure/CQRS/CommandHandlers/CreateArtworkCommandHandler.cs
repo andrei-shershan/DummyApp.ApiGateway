@@ -53,10 +53,10 @@ public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkC
             ImgUrl = uploadResult.Url,
             IsActive = request.IsActive,
             Name = request.Name,
+            SeriesName = request.SeriesName,
             ThumbnailUrl = uploadResult.ThumbnailUrl,
             UploadDate = DateTime.UtcNow
         };
-
 
         var result = await _storageServiceClient.CreateArtworkAsync(createArtwork, cancellationToken);
         if (result is null)
