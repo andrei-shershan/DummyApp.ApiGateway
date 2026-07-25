@@ -24,9 +24,14 @@ public sealed class GetArtworkByIdQueryHandler : IRequestHandler<GetArtworkByIdQ
 
     public async Task<ArtworkDto?> Handle(GetArtworkByIdQuery request, CancellationToken cancellationToken)
     {
-        var activeOnly = _artworkQueryFilterService.GetArtworkByIdActiveOnly();
+        var activeOnly = _artworkQueryFilterService.ShouldRequestActiveOnly(request.ActiveOnly);
         var artwork = await _storageServiceClient.GetArtworkByIdAsync(request.Id, activeOnly, cancellationToken);
         if (artwork is null)
+        {
+            return null;
+        }
+
+        if (!artwork.IsActive && !_artworkQueryFilterService.CanAccessArtworkById(artwork))
         {
             return null;
         }

@@ -26,7 +26,7 @@ public sealed class ArtworksController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetArtworks([FromQuery] string? creatorId, [FromQuery] bool? isActive)
+    public async Task<IActionResult> GetArtworks([FromQuery] string? creatorId, [FromQuery] bool isActive = true)
     {
         var artworks = await _mediator.Send(new GetArtworksQuery(creatorId, isActive));
         return Ok(artworks);
@@ -84,7 +84,7 @@ public sealed class ArtworksController : ControllerBase
     }
 
     [HttpPut("{id}/active")]
-    [Authorize(Roles = RoleNames.Creator)]
+    [Authorize(Roles = RoleNames.Creator + "," + RoleNames.Admin)]
     [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateArtworkActive([FromRoute] Guid id, [FromBody] UpdateArtworkIsActiveRequest body)

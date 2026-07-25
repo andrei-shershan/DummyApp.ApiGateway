@@ -63,7 +63,7 @@ public static class ServiceCollectionExtensions
         })
         .AddHttpMessageHandler(sp => new ClientCredentialsTokenHandler(
             sp.GetRequiredService<IClientCredentialsTokenCache>(),
-            scope: "storage.write",
+            scope: "storage.scope",
             cacheKey: "storage",
             sp.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>()));
 

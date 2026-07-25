@@ -29,7 +29,7 @@ public sealed class GetArtworksTests : ArtworksControllerTestBase
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock);
 
-        var result = await controller.GetArtworks(null, null);
+        var result = await controller.GetArtworks(null);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(expectedArtworks, Assert.IsAssignableFrom<IEnumerable<ArtworkDto>>(okResult.Value));
@@ -46,16 +46,16 @@ public sealed class GetArtworksTests : ArtworksControllerTestBase
         };
 
         var mediatorMock = new Mock<IMediator>();
-        mediatorMock.Setup(m => m.Send(It.Is<GetArtworksQuery>(q => q.CreatorId == creatorId && q.IsActive == null), It.IsAny<CancellationToken>()))
+        mediatorMock.Setup(m => m.Send(It.Is<GetArtworksQuery>(q => q.CreatorId == creatorId && q.IsActive == true), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedArtworks);
 
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock);
 
-        var result = await controller.GetArtworks(creatorId, null);
+        var result = await controller.GetArtworks(creatorId);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(expectedArtworks, Assert.IsAssignableFrom<IEnumerable<ArtworkDto>>(okResult.Value));
-        mediatorMock.Verify(m => m.Send(It.Is<GetArtworksQuery>(q => q.CreatorId == creatorId && q.IsActive == null), It.IsAny<CancellationToken>()), Times.Once);
+        mediatorMock.Verify(m => m.Send(It.Is<GetArtworksQuery>(q => q.CreatorId == creatorId && q.IsActive == true), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

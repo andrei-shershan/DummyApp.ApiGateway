@@ -76,11 +76,6 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(CancellationToken cancellationToken)
-    {
-        return await GetArtworksAsync(null, null, cancellationToken);
-    }
-
     public async Task<ArtworkDto?> GetArtworkByIdAsync(Guid id, bool activeOnly, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync($"api/artworks/{id}?activeOnly={activeOnly.ToString().ToLowerInvariant()}", cancellationToken);
@@ -105,7 +100,7 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool? isActive, CancellationToken cancellationToken)
+    public async Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool isActive, CancellationToken cancellationToken)
     {
         var queryParams = new List<string>();
 
@@ -114,10 +109,7 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
             queryParams.Add($"creatorId={Uri.EscapeDataString(creatorId)}");
         }
 
-        if (isActive.HasValue)
-        {
-            queryParams.Add($"isActive={isActive.Value.ToString().ToLowerInvariant()}");
-        }
+        queryParams.Add($"isActive={isActive.ToString().ToLowerInvariant()}");
 
         var requestUri = "api/artworks";
         if (queryParams.Count > 0)

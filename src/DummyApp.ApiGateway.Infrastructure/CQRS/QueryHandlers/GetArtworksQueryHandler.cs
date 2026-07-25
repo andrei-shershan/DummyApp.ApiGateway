@@ -24,10 +24,10 @@ public sealed class GetArtworksQueryHandler : IRequestHandler<GetArtworksQuery, 
 
     public async Task<IEnumerable<ArtworkDto>> Handle(GetArtworksQuery request, CancellationToken cancellationToken)
     {
-        var queryFilter = _artworkQueryFilterService.ApplyFilter(request);
-        var artworks = await _storageServiceClient.GetArtworksAsync(queryFilter.CreatorId, queryFilter.IsActive, cancellationToken);
+        var activeOnly = _artworkQueryFilterService.ShouldRequestActiveOnly(request.IsActive);
+        var artworks = await _storageServiceClient.GetArtworksAsync(request.CreatorId, activeOnly, cancellationToken);
 
-        return artworks?.Select(art =>
+        return artworks?.Where(x => _artworkQueryFilterService.CanAccessArtworkById(x)).Select(art =>
         {
             var imgUrl = _storageUrlService.GetBlobUrl(art.ImgUrl);
             var thumbnailUrl = _storageUrlService.GetBlobUrl(art.ThumbnailUrl);

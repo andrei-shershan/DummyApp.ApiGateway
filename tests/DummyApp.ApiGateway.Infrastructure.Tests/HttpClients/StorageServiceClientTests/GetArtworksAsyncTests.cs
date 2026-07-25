@@ -17,7 +17,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(new HttpResponseMessage(HttpStatusCode.InternalServerError));
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync(CancellationToken.None);
+        var result = await client.GetArtworksAsync(null, true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyNoLogs();
@@ -34,7 +34,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync(CancellationToken.None);
+        var result = await client.GetArtworksAsync(null, true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyNoLogs();
@@ -51,7 +51,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync(CancellationToken.None);
+        var result = await client.GetArtworksAsync(null, true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyLog(LogLevel.Error, "Failed to read response content from storage service.", Times.Once());
@@ -83,7 +83,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync(CancellationToken.None);
+        var result = await client.GetArtworksAsync(null, true, CancellationToken.None);
 
         Assert.Equal(artworks, result);
         VerifyNoLogs();
@@ -115,7 +115,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync("creator-1", null, CancellationToken.None);
+        var result = await client.GetArtworksAsync("creator-1", true, CancellationToken.None);
 
         Assert.Equal(artworks, result);
         VerifyNoLogs();
@@ -127,7 +127,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(new HttpResponseMessage(HttpStatusCode.InternalServerError));
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync("creator-1", null, CancellationToken.None);
+        var result = await client.GetArtworksAsync("creator-1", true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyNoLogs();
@@ -144,7 +144,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync("creator-1", null, CancellationToken.None);
+        var result = await client.GetArtworksAsync("creator-1", true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyNoLogs();
@@ -161,7 +161,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync("creator-1", null, CancellationToken.None);
+        var result = await client.GetArtworksAsync("creator-1", true, CancellationToken.None);
 
         Assert.Null(result);
         VerifyLog(LogLevel.Error, "Failed to read response content from storage service.", Times.Once());
@@ -193,7 +193,7 @@ public class GetArtworksAsyncTests : StorageServiceClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new StorageServiceClient(httpClient, LoggerMock.Object);
 
-        var result = await client.GetArtworksAsync("   ", null, CancellationToken.None);
+        var result = await client.GetArtworksAsync("   ", true, CancellationToken.None);
 
         Assert.Equal(artworks, result);
         VerifyNoLogs();

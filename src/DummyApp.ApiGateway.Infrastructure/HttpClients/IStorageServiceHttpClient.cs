@@ -7,6 +7,5 @@ public interface IStorageServiceHttpClient
     Task<ArtworkDto?> CreateArtworkAsync(ArtworkDto artwork, CancellationToken cancellationToken);
     Task<ArtworkDto?> UpdateArtworkIsActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken);
     Task<ArtworkDto?> GetArtworkByIdAsync(Guid id, bool activeOnly, CancellationToken cancellationToken);
-    Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(CancellationToken cancellationToken);
-    Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool? isActive, CancellationToken cancellationToken);
+    Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool isActive, CancellationToken cancellationToken);
 }
