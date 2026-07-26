@@ -13,60 +13,65 @@ using Xunit;
 
 namespace DummyApp.ApiGateway.WebApi.Tests.Controllers.Basket;
 
-public sealed class GetItemsTests
+public sealed class GetBasketSummaryTests
 {
     [Fact]
-    public async Task GetItems_ReturnsNotFound_WhenCookieMissing()
+    public async Task GetBasketSummary_ReturnsNotFound_WhenCookieMissing()
     {
         var mediatorMock = new Mock<IMediator>();
         var loggerMock = new Mock<ILogger<BasketController>>();
         var controller = CreateController(mediatorMock, loggerMock);
 
-        var result = await controller.GetItems();
+        var result = await controller.Get();
 
         Assert.IsType<NotFoundResult>(result);
-        mediatorMock.Verify(m => m.Send(It.IsAny<GetOrderItemsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task GetItems_ReturnsNotFound_WhenHandlerReturnsNull()
+    public async Task GetBasketSummary_ReturnsNotFound_WhenHandlerReturnsNull()
     {
         var orderId = Guid.NewGuid();
         var mediatorMock = new Mock<IMediator>();
-        mediatorMock.Setup(m => m.Send(It.IsAny<GetOrderItemsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<OrderItemDto>?)null);
+        mediatorMock.Setup(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((OrderSummaryDto?)null);
 
         var loggerMock = new Mock<ILogger<BasketController>>();
         var controller = CreateController(mediatorMock, loggerMock);
         controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={orderId:D}";
 
-        var result = await controller.GetItems();
+        var result = await controller.Get();
 
         Assert.IsType<NotFoundResult>(result);
     }
 
     [Fact]
-    public async Task GetItems_ReturnsOk_WhenHandlerReturnsItems()
+    public async Task GetBasketSummary_ReturnsOk_WhenHandlerReturnsSummary()
     {
         var orderId = Guid.NewGuid();
-        var items = new[]
+        var summary = new OrderSummaryDto
         {
-            new OrderItemDto { OrderId = orderId, ArtworkId = Guid.NewGuid(), Quantity = 1, Name = "Test art", Description = "Desc", ImgUrl = "img", ThumbnailUrl = "thumb" }
+            Status = "Active",
+            Items = new[]
+            {
+                new OrderItemDto { OrderId = orderId, ArtworkId = Guid.NewGuid(), Quantity = 1, Name = "Test art", Description = "Desc", ImgUrl = "img", ThumbnailUrl = "thumb" }
+            }
         };
 
         var mediatorMock = new Mock<IMediator>();
-        mediatorMock.Setup(m => m.Send(It.Is<GetOrderItemsQuery>(q => q.OrderId == orderId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(items);
+        mediatorMock.Setup(m => m.Send(It.Is<GetOrderSummaryQuery>(q => q.OrderId == orderId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(summary);
 
         var loggerMock = new Mock<ILogger<BasketController>>();
         var controller = CreateController(mediatorMock, loggerMock);
         controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={orderId:D}";
 
-        var result = await controller.GetItems();
+        var result = await controller.Get();
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnedItems = Assert.IsAssignableFrom<IEnumerable<OrderItemDto>>(okResult.Value);
-        Assert.Equal(items, returnedItems);
+        var returnedSummary = Assert.IsType<OrderSummaryDto>(okResult.Value);
+        Assert.Equal(summary.Status, returnedSummary.Status);
+        Assert.Equal(summary.Items, returnedSummary.Items);
     }
 
     private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock)
