@@ -57,7 +57,7 @@ public sealed class AdminController : ControllerBase
     {
         if (request is null)
         {
-            return BadRequest("Request body is required.");
+            return BadRequest("Request body is required!");
         }
 
         var result = await _mediator.Send(new UpdateUserActiveStateCommand(id, request.IsActive.Value));
