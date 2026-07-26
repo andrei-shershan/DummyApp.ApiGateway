@@ -1,4 +1,6 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
+using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using DummyApp.ApiGateway.WebApi.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -58,10 +60,10 @@ public sealed class BasketController : ControllerBase
         return Ok(new { orderId });
     }
 
-    [HttpGet("items")]
-    [ProducesResponseType(typeof(IEnumerable<DummyApp.ApiGateway.Infrastructure.Models.Dtos.OrderItemDto>), StatusCodes.Status200OK)]
+    [HttpGet]
+    [ProducesResponseType(typeof(OrderSummaryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetItems()
+    public async Task<IActionResult> Get()
     {
         var basketId = Request.Cookies[BasketCookieName];
         if (!Guid.TryParse(basketId, out var orderId))
@@ -69,12 +71,33 @@ public sealed class BasketController : ControllerBase
             return NotFound();
         }
 
-        var result = await _mediator.Send(new DummyApp.ApiGateway.Infrastructure.CQRS.Queries.GetOrderItemsQuery(orderId));
+        var result = await _mediator.Send(new GetOrderSummaryQuery(orderId));
         if (result is null)
         {
             return NotFound();
         }
 
         return Ok(result);
+    }
+
+    [HttpPost("pay")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Pay()
+    {
+        var basketId = Request.Cookies[BasketCookieName];
+        if (!Guid.TryParse(basketId, out var orderId))
+        {
+            return BadRequest("Basket is required to pay order.");
+        }
+
+        var result = await _mediator.Send(new PayOrderCommand(orderId));
+        if (!result)
+        {
+            _logger.LogError("Failed to transition basket {BasketId} to processing.", orderId);
+            return BadRequest("Unable to pay order.");
+        }
+
+        return Ok();
     }
 }

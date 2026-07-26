@@ -223,4 +223,64 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
             return null;
         }
     }
+
+    public async Task<OrderSummaryDto?> GetOrderSummaryAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/orders/{orderId}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var summary = await response.Content.ReadFromJsonAsync<OrderSummaryDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return summary;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting order summary.");
+            return null;
+        }
+    }
+
+    public async Task<OrderStatusDto?> GetOrderStatusAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/orders/{orderId}/status", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var status = await response.Content.ReadFromJsonAsync<OrderStatusDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return status;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting order status.");
+            return null;
+        }
+    }
+
+    public async Task<bool> PayOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsync($"api/orders/{orderId}/pay", null, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to pay order via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
 }
