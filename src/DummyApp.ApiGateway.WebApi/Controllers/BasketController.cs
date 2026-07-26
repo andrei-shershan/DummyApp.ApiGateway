@@ -32,6 +32,7 @@ public sealed class BasketController : ControllerBase
             return BadRequest("ArtworkId is required.");
         }
 
+        var quantity = request.Quantity ?? 1;
         var basketId = Request.Cookies[BasketCookieName];
         if (!Guid.TryParse(basketId, out var orderId))
         {
@@ -46,12 +47,12 @@ public sealed class BasketController : ControllerBase
             });
         }
 
-        var command = new AddArtworkToBasketCommand(orderId, request.ArtworkId, 1);
+        var command = new AddArtworkToBasketCommand(orderId, request.ArtworkId, quantity);
         var added = await _mediator.Send(command);
         if (!added)
         {
-            _logger.LogError("Failed to add artwork {ArtworkId} to basket {BasketId}.", request.ArtworkId, orderId);
-            return BadRequest("Unable to add artwork to basket.");
+            _logger.LogError("Failed to update basket item {ArtworkId} in basket {BasketId} with quantity {Quantity}.", request.ArtworkId, orderId, quantity);
+            return BadRequest("Unable to update basket item.");
         }
 
         return Ok(new { orderId });
