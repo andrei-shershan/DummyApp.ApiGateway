@@ -10,4 +10,6 @@ public interface IStorageServiceHttpClient
     Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool isActive, CancellationToken cancellationToken);
     Task<IEnumerable<SeriesDto>?> GetSeriesAsync(string creatorId, CancellationToken cancellationToken);
     Task<SeriesDto?> CreateSeriesAsync(string name, CancellationToken cancellationToken);
+    Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, CancellationToken cancellationToken);
+    Task<IEnumerable<OrderItemDto>?> GetOrderItemsAsync(Guid orderId, CancellationToken cancellationToken);
 }

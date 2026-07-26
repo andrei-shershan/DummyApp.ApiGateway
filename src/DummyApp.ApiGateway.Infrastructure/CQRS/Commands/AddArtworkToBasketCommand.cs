@@ -1,0 +1,5 @@
+using MediatR;
+
+namespace DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
+
+public sealed record AddArtworkToBasketCommand(Guid OrderId, Guid ArtworkId, int Quantity = 1) : IRequest<bool>;
