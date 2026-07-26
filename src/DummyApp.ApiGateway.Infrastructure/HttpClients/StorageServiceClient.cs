@@ -187,4 +187,40 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
             return null;
         }
     }
+
+    public async Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"api/orders/{orderId}/items", new { ArtworkId = artworkId, Quantity = quantity }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to add order item via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    public async Task<IEnumerable<OrderItemDto>?> GetOrderItemsAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/orders/{orderId}/items", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var items = await response.Content.ReadFromJsonAsync<IEnumerable<OrderItemDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return items;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting order items.");
+            return null;
+        }
+    }
 }
