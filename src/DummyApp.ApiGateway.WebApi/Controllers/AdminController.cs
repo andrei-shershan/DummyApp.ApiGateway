@@ -35,6 +35,13 @@ public sealed class AdminController : ControllerBase
         return Ok(roles);
     }
 
+    [HttpGet("print-sizes")]
+    public async Task<IActionResult> GetPrintSizes()
+    {
+        var printSizes = await _mediator.Send(new GetPrintSizesQuery());
+        return Ok(printSizes);
+    }
+
     [HttpPost("invite")]
     public async Task<IActionResult> SendInvite([FromBody] SendInviteRequest request)
     {
