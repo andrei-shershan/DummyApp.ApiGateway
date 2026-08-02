@@ -177,6 +177,37 @@ public sealed class BasketControllerTests
     }
 
     [Fact]
+    public async Task SetStatus_ReturnsBadRequest_WhenStatusIsInvalid()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock);
+        controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={Guid.NewGuid():D}";
+
+        var result = await controller.SetStatus(new SetBasketStatusRequest { Status = "Invalid" });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        mediatorMock.Verify(m => m.Send(It.IsAny<SetOrderStatusCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetStatus_ReturnsOk_WhenStatusIsValid()
+    {
+        var orderId = Guid.NewGuid();
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock.Setup(m => m.Send(It.IsAny<SetOrderStatusCommand>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock);
+        controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={orderId:D}";
+
+        var result = await controller.SetStatus(new SetBasketStatusRequest { Status = "Processing" });
+
+        Assert.IsType<OkResult>(result);
+        mediatorMock.Verify(m => m.Send(It.Is<SetOrderStatusCommand>(c => c.OrderId == orderId && c.Status == "Processing"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task GetPrintSizes_ReturnsOkWithPrintSizes()
     {
         var printSizes = new List<PrintSizeDto>

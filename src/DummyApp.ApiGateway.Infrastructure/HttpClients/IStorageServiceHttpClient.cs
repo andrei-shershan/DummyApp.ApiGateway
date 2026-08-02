@@ -16,5 +16,5 @@ public interface IStorageServiceHttpClient
     Task<IEnumerable<OrderItemDto>?> GetOrderItemsAsync(Guid orderId, CancellationToken cancellationToken);
     Task<OrderSummaryDto?> GetOrderSummaryAsync(Guid orderId, CancellationToken cancellationToken);
     Task<OrderStatusDto?> GetOrderStatusAsync(Guid orderId, CancellationToken cancellationToken);
-    Task<bool> PayOrderAsync(Guid orderId, CancellationToken cancellationToken);
+    Task<bool> SetOrderStatusAsync(Guid orderId, string status, CancellationToken cancellationToken);
 }

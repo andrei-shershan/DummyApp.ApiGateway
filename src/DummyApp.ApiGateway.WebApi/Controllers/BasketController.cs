@@ -122,24 +122,38 @@ public sealed class BasketController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("pay")]
+    [HttpPost("status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Pay()
+    public async Task<IActionResult> SetStatus([FromBody] SetBasketStatusRequest request)
     {
+        if (request is null || string.IsNullOrWhiteSpace(request.Status))
+        {
+            _logger.LogWarning("SetStatus failed due to invalid request body.");
+            return BadRequest("Status is required.");
+        }
+
+        if (!request.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase)
+            && !request.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("SetStatus failed due to unsupported status {Status}.", request.Status);
+            return BadRequest("Invalid status.");
+        }
+
         var basketId = Request.Cookies[BasketCookieName];
         if (!Guid.TryParse(basketId, out var orderId))
         {
-            return BadRequest("Basket is required to pay order.");
+            return BadRequest("Basket is required to update status.");
         }
 
-        var result = await _mediator.Send(new PayOrderCommand(orderId));
+        var result = await _mediator.Send(new SetOrderStatusCommand(orderId, request.Status));
         if (!result)
         {
-            _logger.LogError("Failed to transition basket {BasketId} to processing.", orderId);
-            return BadRequest("Unable to pay order.");
+            _logger.LogError("Failed to transition basket {BasketId} to status {Status}.", orderId, request.Status);
+            return BadRequest("Unable to update basket status.");
         }
 
         return Ok();
     }
 }
+
