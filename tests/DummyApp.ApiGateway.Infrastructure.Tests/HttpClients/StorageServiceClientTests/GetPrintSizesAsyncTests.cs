@@ -66,7 +66,16 @@ public sealed class GetPrintSizesAsyncTests : StorageServiceClientTestsBase
 
         var result = await client.GetPrintSizesAsync(CancellationToken.None);
 
-        Assert.Equal(expected, result);
+        Assert.NotNull(result);
+        var actual = Assert.Single(result!);
+        Assert.Equal(expected[0].Id, actual.Id);
+        Assert.Equal(expected[0].Name, actual.Name);
+        var actualPrice = Assert.Single(actual.Prices);
+        Assert.Equal(expected[0].Prices.Single().Id, actualPrice.Id);
+        Assert.Equal(expected[0].Prices.Single().PrintSizeId, actualPrice.PrintSizeId);
+        Assert.Equal(expected[0].Prices.Single().Value, actualPrice.Value);
+        Assert.Equal(expected[0].Prices.Single().UpdatedAt, actualPrice.UpdatedAt);
+        Assert.Equal(expected[0].Prices.Single().IsDeleted, actualPrice.IsDeleted);
         VerifyNoLogs();
     }
 }
