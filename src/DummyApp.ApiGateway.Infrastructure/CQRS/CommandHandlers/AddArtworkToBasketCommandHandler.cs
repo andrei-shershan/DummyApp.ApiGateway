@@ -24,7 +24,7 @@ public sealed class AddArtworkToBasketCommandHandler : IRequestHandler<AddArtwor
             return false;
         }
 
-        var added = await _storageServiceClient.AddOrderItemAsync(request.OrderId, request.ArtworkId, request.Quantity, cancellationToken);
+        var added = await _storageServiceClient.AddOrderItemAsync(request.OrderId, request.ArtworkId, request.Quantity, request.PrintSizeId, request.PriceId, cancellationToken);
         if (!added)
         {
             _logger.LogError("Storage service failed to add artwork {ArtworkId} to order {OrderId}.", request.ArtworkId, request.OrderId);

@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
@@ -212,12 +213,29 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, CancellationToken cancellationToken)
+    public async Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, int? printSizeId, int? priceId, CancellationToken cancellationToken)
     {
-        var response = await _httpClient.PostAsJsonAsync($"api/orders/{orderId}/items", new { ArtworkId = artworkId, Quantity = quantity }, cancellationToken);
+        var response = await _httpClient.PostAsJsonAsync($"api/orders/{orderId}/items", new { ArtworkId = artworkId, Quantity = quantity, PrintSizeId = printSizeId, PriceId = priceId }, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Failed to add order item via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    public async Task<bool> UpdateOrderItemAsync(Guid orderId, Guid artworkId, int quantity, int? printSizeId, int? priceId, CancellationToken cancellationToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"api/orders/{orderId}/items/{artworkId}")
+        {
+            Content = JsonContent.Create(new { Quantity = quantity, PrintSizeId = printSizeId, PriceId = priceId })
+        };
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to update order item via storage service. Status code: {StatusCode}", response.StatusCode);
             return false;
         }
 
