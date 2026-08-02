@@ -163,6 +163,30 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
+    public async Task<IEnumerable<PrintSizeDto>?> GetPrintSizesAsync(CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync("api/printsizes", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var printSizes = await response.Content.ReadFromJsonAsync<IEnumerable<PrintSizeDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return printSizes;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting print sizes.");
+            return null;
+        }
+    }
+
     public async Task<SeriesDto?> CreateSeriesAsync(string name, CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync("api/series", new { Name = name }, cancellationToken);
