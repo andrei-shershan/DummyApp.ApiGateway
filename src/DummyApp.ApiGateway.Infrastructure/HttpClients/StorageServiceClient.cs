@@ -314,12 +314,12 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<bool> PayOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    public async Task<bool> SetOrderStatusAsync(Guid orderId, string status, CancellationToken cancellationToken)
     {
-        var response = await _httpClient.PostAsync($"api/orders/{orderId}/pay", null, cancellationToken);
+        var response = await _httpClient.PostAsJsonAsync($"api/orders/{orderId}/status", new { Status = status }, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Failed to pay order via storage service. Status code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Failed to change order status via storage service. Status code: {StatusCode}", response.StatusCode);
             return false;
         }
 
