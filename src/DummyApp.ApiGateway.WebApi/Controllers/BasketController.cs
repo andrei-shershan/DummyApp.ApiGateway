@@ -35,6 +35,12 @@ public sealed class BasketController : ControllerBase
         }
 
         var quantity = request.Quantity ?? 1;
+        if (quantity <= 0)
+        {
+            _logger.LogWarning("AddItem failed because quantity {Quantity} is not positive.", quantity);
+            return BadRequest("Quantity must be greater than zero.");
+        }
+
         var basketId = Request.Cookies[BasketCookieName];
         if (!Guid.TryParse(basketId, out var orderId))
         {
@@ -49,15 +55,43 @@ public sealed class BasketController : ControllerBase
             });
         }
 
-        var command = new AddArtworkToBasketCommand(orderId, request.ArtworkId, quantity);
+        var command = new AddArtworkToBasketCommand(orderId, request.ArtworkId, quantity, request.PrintSizeId, request.PriceId);
         var added = await _mediator.Send(command);
         if (!added)
         {
-            _logger.LogError("Failed to update basket item {ArtworkId} in basket {BasketId} with quantity {Quantity}.", request.ArtworkId, orderId, quantity);
-            return BadRequest("Unable to update basket item.");
+            _logger.LogError("Failed to add basket item {ArtworkId} to basket {BasketId} with quantity {Quantity}.", request.ArtworkId, orderId, quantity);
+            return BadRequest("Unable to add basket item.");
         }
 
         return Ok(new { orderId });
+    }
+
+    [HttpPatch("items/{artworkId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateItem([FromRoute] Guid artworkId, [FromBody] UpdateBasketItemRequest request)
+    {
+        if (artworkId == Guid.Empty || request is null || request.Quantity < 0)
+        {
+            _logger.LogWarning("UpdateItem failed due to invalid request body.");
+            return BadRequest("Valid artworkId and non-negative quantity are required.");
+        }
+
+        var basketId = Request.Cookies[BasketCookieName];
+        if (!Guid.TryParse(basketId, out var orderId))
+        {
+            return BadRequest("Basket is required to update an item.");
+        }
+
+        var command = new UpdateArtworkInBasketCommand(orderId, artworkId, request.Quantity, request.PrintSizeId, request.PriceId);
+        var updated = await _mediator.Send(command);
+        if (!updated)
+        {
+            _logger.LogError("Failed to update basket item {ArtworkId} in basket {BasketId} with quantity {Quantity}.", artworkId, orderId, request.Quantity);
+            return BadRequest("Unable to update basket item.");
+        }
+
+        return Ok();
     }
 
     [HttpGet]
@@ -77,6 +111,14 @@ public sealed class BasketController : ControllerBase
             return NotFound();
         }
 
+        return Ok(result);
+    }
+
+    [HttpGet("print-sizes")]
+    [ProducesResponseType(typeof(IEnumerable<PrintSizeDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPrintSizes()
+    {
+        var result = await _mediator.Send(new GetPrintSizesQuery());
         return Ok(result);
     }
 

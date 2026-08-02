@@ -24,7 +24,7 @@ public sealed class HandleTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result);
-        _storageServiceClientMock.Verify(x => x.AddOrderItemAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _storageServiceClientMock.Verify(x => x.AddOrderItemAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public sealed class HandleTests
         var orderId = Guid.NewGuid();
         var artworkId = Guid.NewGuid();
         _storageServiceClientMock
-            .Setup(x => x.AddOrderItemAsync(orderId, artworkId, 1, CancellationToken.None))
+            .Setup(x => x.AddOrderItemAsync(orderId, artworkId, 1, null, null, CancellationToken.None))
             .ReturnsAsync(true);
 
         var handler = CreateHandler();
@@ -42,6 +42,6 @@ public sealed class HandleTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result);
-        _storageServiceClientMock.Verify(x => x.AddOrderItemAsync(orderId, artworkId, 1, CancellationToken.None), Times.Once);
+        _storageServiceClientMock.Verify(x => x.AddOrderItemAsync(orderId, artworkId, 1, null, null, CancellationToken.None), Times.Once);
     }
 }

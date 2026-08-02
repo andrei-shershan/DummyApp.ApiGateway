@@ -11,7 +11,8 @@ public interface IStorageServiceHttpClient
     Task<IEnumerable<SeriesDto>?> GetSeriesAsync(string creatorId, CancellationToken cancellationToken);
     Task<SeriesDto?> CreateSeriesAsync(string name, CancellationToken cancellationToken);
     Task<IEnumerable<PrintSizeDto>?> GetPrintSizesAsync(CancellationToken cancellationToken);
-    Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, CancellationToken cancellationToken);
+    Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, int? printSizeId = null, int? priceId = null, CancellationToken cancellationToken = default);
+    Task<bool> UpdateOrderItemAsync(Guid orderId, Guid artworkId, int quantity, int? printSizeId = null, int? priceId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<OrderItemDto>?> GetOrderItemsAsync(Guid orderId, CancellationToken cancellationToken);
     Task<OrderSummaryDto?> GetOrderSummaryAsync(Guid orderId, CancellationToken cancellationToken);
     Task<OrderStatusDto?> GetOrderStatusAsync(Guid orderId, CancellationToken cancellationToken);
