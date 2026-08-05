@@ -4,6 +4,7 @@ using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using DummyApp.ApiGateway.Infrastructure.Models;
 using DummyApp.ApiGateway.Infrastructure.Services;
 using DummyApp.ApiGateway.WebApi.Configuration;
+using DummyApp.ApiGateway.WebApi.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using BlobStorageOptionsModel = DummyApp.ApiGateway.Infrastructure.Models.BlobStorageOptions;
@@ -36,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<IStorageUrlService, StorageUrlService>();
         services.AddScoped<IArtworkQueryFilterService, ArtworkQueryFilterService>();
+        services.AddScoped<IStripeSessionService, StripeSessionService>();
         services.AddSingleton(new ClientCredentialsTokenCacheOptions
         {
             Authority = settings.IdentityServer.Authority,
