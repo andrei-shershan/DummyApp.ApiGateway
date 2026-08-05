@@ -324,9 +324,13 @@ public sealed class BasketControllerTests
         stripeSessionServiceMock.Verify(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()), Times.Once);
     }
 
-    private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock)
+    private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock, Mock<IStripeSessionService>? stripeSessionServiceMock = null, ApiGatewaySettings? settings = null)
     {
-        var controller = new BasketController(mediatorMock.Object, loggerMock.Object)
+        var controller = new BasketController(
+            mediatorMock.Object,
+            loggerMock.Object,
+            stripeSessionServiceMock?.Object ?? new Mock<IStripeSessionService>().Object,
+            settings ?? new ApiGatewaySettings())
         {
             ControllerContext = new ControllerContext
             {
