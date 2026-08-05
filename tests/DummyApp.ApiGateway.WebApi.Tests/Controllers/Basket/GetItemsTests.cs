@@ -1,8 +1,10 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
+using DummyApp.ApiGateway.WebApi.Configuration;
 using DummyApp.ApiGateway.WebApi.Controllers;
 using DummyApp.ApiGateway.WebApi.Models;
+using DummyApp.ApiGateway.WebApi.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -74,9 +76,13 @@ public sealed class GetBasketSummaryTests
         Assert.Equal(summary.Items, returnedSummary.Items);
     }
 
-    private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock)
+    private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock, Mock<IStripeSessionService>? stripeSessionServiceMock = null, ApiGatewaySettings? settings = null)
     {
-        return new BasketController(mediatorMock.Object, loggerMock.Object)
+        return new BasketController(
+            mediatorMock.Object,
+            loggerMock.Object,
+            stripeSessionServiceMock?.Object ?? new Mock<IStripeSessionService>().Object,
+            settings ?? new ApiGatewaySettings())
         {
             ControllerContext = new ControllerContext
             {

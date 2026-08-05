@@ -1,14 +1,18 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
+using DummyApp.ApiGateway.WebApi.Configuration;
 using DummyApp.ApiGateway.WebApi.Controllers;
 using DummyApp.ApiGateway.WebApi.Models;
+using DummyApp.ApiGateway.WebApi.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Moq;
+using Stripe;
+using Stripe.Checkout;
 using Xunit;
 
 namespace DummyApp.ApiGateway.WebApi.Tests.Controllers.Basket;
@@ -229,9 +233,104 @@ public sealed class BasketControllerTests
         mediatorMock.Verify(m => m.Send(It.IsAny<GetPrintSizesQuery>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock)
+    [Fact]
+    public async Task Checkout_ReturnsBadRequest_WhenBasketCookieIsMissing()
     {
-        var controller = new BasketController(mediatorMock.Object, loggerMock.Object)
+        var mediatorMock = new Mock<IMediator>();
+        var stripeSessionServiceMock = new Mock<IStripeSessionService>();
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock, stripeSessionServiceMock);
+
+        var result = await controller.Checkout();
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        mediatorMock.Verify(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+        stripeSessionServiceMock.Verify(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Checkout_ReturnsBadRequest_WhenOrderSummaryIsMissing()
+    {
+        var orderId = Guid.NewGuid();
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock.Setup(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((OrderSummaryDto?)null);
+        var stripeSessionServiceMock = new Mock<IStripeSessionService>();
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock, stripeSessionServiceMock);
+        controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={orderId:D}";
+
+        var result = await controller.Checkout();
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        stripeSessionServiceMock.Verify(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Checkout_ReturnsBadRequest_WhenOrderStatusIsInvalid()
+    {
+        var orderId = Guid.NewGuid();
+        var summary = new OrderSummaryDto
+        {
+            Items = new List<OrderItemDto>
+            {
+                new OrderItemDto { OrderId = orderId, ArtworkId = Guid.NewGuid(), Quantity = 1, Name = "Art", Description = "Desc", PriceValue = 10m }
+            },
+            Status = "Completed"
+        };
+
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock.Setup(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(summary);
+        var stripeSessionServiceMock = new Mock<IStripeSessionService>();
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock, stripeSessionServiceMock);
+        controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={orderId:D}";
+
+        var result = await controller.Checkout();
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        stripeSessionServiceMock.Verify(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Checkout_ReturnsOk_WhenCheckoutSessionCreated()
+    {
+        var orderId = Guid.NewGuid();
+        var summary = new OrderSummaryDto
+        {
+            Items = new List<OrderItemDto>
+            {
+                new OrderItemDto { OrderId = orderId, ArtworkId = Guid.NewGuid(), Quantity = 1, Name = "Art", Description = "Desc", PriceValue = 10m }
+            },
+            Status = "Processing"
+        };
+
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock.Setup(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(summary);
+        var stripeSessionServiceMock = new Mock<IStripeSessionService>();
+        stripeSessionServiceMock.Setup(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()))
+            .ReturnsAsync(new Session { Url = "https://checkout.stripe.com/pay/session-id" });
+
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock, stripeSessionServiceMock);
+        controller.HttpContext.Request.Headers[HeaderNames.Cookie] = $"BasketId={orderId:D}";
+
+        var result = await controller.Checkout();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal("https://checkout.stripe.com/pay/session-id", ((CheckoutResponse)okResult.Value!).Url);
+        stripeSessionServiceMock.Verify(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()), Times.Once);
+    }
+
+    private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock, Mock<IStripeSessionService>? stripeSessionServiceMock = null, ApiGatewaySettings? settings = null)
+    {
+        var controller = new BasketController(
+            mediatorMock.Object,
+            loggerMock.Object,
+            stripeSessionServiceMock?.Object ?? new Mock<IStripeSessionService>().Object,
+            settings ?? new ApiGatewaySettings())
         {
             ControllerContext = new ControllerContext
             {

@@ -1,10 +1,15 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
+using DummyApp.ApiGateway.WebApi.Configuration;
 using DummyApp.ApiGateway.WebApi.Models;
+using DummyApp.ApiGateway.WebApi.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Stripe;
+using Stripe.Checkout;
+using System.Linq;
 
 namespace DummyApp.ApiGateway.WebApi.Controllers;
 
@@ -16,11 +21,15 @@ public sealed class BasketController : ControllerBase
     private const string BasketCookieName = "BasketId";
     private readonly IMediator _mediator;
     private readonly ILogger<BasketController> _logger;
+    private readonly ApiGatewaySettings _settings;
+    private readonly IStripeSessionService _stripeSessionService;
 
-    public BasketController(IMediator mediator, ILogger<BasketController> logger)
+    public BasketController(IMediator mediator, ILogger<BasketController> logger, IStripeSessionService stripeSessionService, ApiGatewaySettings settings)
     {
         _mediator = mediator;
         _logger = logger;
+        _stripeSessionService = stripeSessionService;
+        _settings = settings;
     }
 
     [HttpPost("items")]
@@ -122,6 +131,84 @@ public sealed class BasketController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("checkout")]
+    [ProducesResponseType(typeof(CheckoutResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Checkout()
+    {
+        var basketId = Request.Cookies[BasketCookieName];
+        if (!Guid.TryParse(basketId, out var orderId))
+        {
+            _logger.LogWarning("Checkout failed because basket cookie is missing or invalid.");
+            return BadRequest("Basket is required to start checkout.");
+        }
+
+        var summary = await _mediator.Send(new GetOrderSummaryQuery(orderId));
+        if (summary is null || !summary.Items.Any())
+        {
+            _logger.LogWarning("Checkout failed because order summary is missing or empty for basket {BasketId}.", orderId);
+            return BadRequest("Order summary is not available.");
+        }
+
+        if (!summary.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase)
+            && !summary.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Checkout failed because order {BasketId} has invalid status {Status}.", orderId, summary.Status);
+            return BadRequest("Order is not ready for checkout.");
+        }
+
+        var lineItems = new List<SessionLineItemOptions>();
+        foreach (var item in summary.Items)
+        {
+            if (!item.PriceValue.HasValue || item.PriceValue.Value <= 0m)
+            {
+                _logger.LogWarning("Checkout failed because order {BasketId} contains invalid price for item {ArtworkId}.", orderId, item.ArtworkId);
+                return BadRequest("Order contains invalid item pricing.");
+            }
+
+            lineItems.Add(new SessionLineItemOptions
+            {
+                PriceData = new SessionLineItemPriceDataOptions
+                {
+                    Currency = "pln",
+                    ProductData = new SessionLineItemPriceDataProductDataOptions
+                    {
+                        Name = item.Name,
+                        Description = item.Description ?? string.Empty
+                    },
+                    UnitAmount = (long)Math.Round(item.PriceValue.Value * 100m)
+                },
+                Quantity = item.Quantity
+            });
+        }
+
+        var successUrl = !string.IsNullOrWhiteSpace(_settings.Stripe.SuccessUrl)
+            ? _settings.Stripe.SuccessUrl!
+            : $"{Request.Scheme}://{Request.Host}/";
+        var cancelUrl = !string.IsNullOrWhiteSpace(_settings.Stripe.CancelUrl)
+            ? _settings.Stripe.CancelUrl!
+            : $"{Request.Scheme}://{Request.Host}/basket";
+
+        var sessionOptions = new SessionCreateOptions
+        {
+            PaymentMethodTypes = new List<string> { "card", "blik" },
+            Mode = "payment",
+            LineItems = lineItems,
+            SuccessUrl = successUrl,
+            CancelUrl = cancelUrl,
+            ClientReferenceId = orderId.ToString("D"),
+            Metadata = new Dictionary<string, string>
+            {
+                ["orderId"] = orderId.ToString("D"),
+                ["siteId"] = _settings.Stripe.SiteId ?? "unknown"
+            }
+        };
+
+        var session = await _stripeSessionService.CreateAsync(sessionOptions);
+
+        return Ok(new CheckoutResponse(session.Url ?? string.Empty));
+    }
+
     [HttpPost("status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -156,4 +243,6 @@ public sealed class BasketController : ControllerBase
         return Ok();
     }
 }
+
+public sealed record CheckoutResponse(string Url);
 
