@@ -200,7 +200,7 @@ public sealed class BasketController : ControllerBase
             Metadata = new Dictionary<string, string>
             {
                 ["orderId"] = orderId.ToString("D"),
-                ["siteId"] = _settings.Stripe.SiteId ?? "unknown"
+                ["siteId"] = _settings.Application.SiteId
             }
         };
 

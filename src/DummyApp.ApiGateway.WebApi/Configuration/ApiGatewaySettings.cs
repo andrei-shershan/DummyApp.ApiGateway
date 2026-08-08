@@ -11,6 +11,7 @@ public sealed record ApiGatewaySettings
     public BlobStorageOptions BlobStorage { get; init; } = new();
     public ReverseProxyOptions ReverseProxy { get; init; } = new();
     public StripeOptions Stripe { get; init; } = new();
+    public ApplicationOptions Application { get; init; } = new();
 
     public EmailServiceOptions EmailService { get; init; } = new();
 }
@@ -55,6 +56,11 @@ public sealed record StripeOptions
     public string? SecretKey { get; init; }
     public string? SuccessUrl { get; init; }
     public string? CancelUrl { get; init; }
+    public string? SiteId { get; init; }
+}
+
+public sealed record ApplicationOptions
+{
     public string? SiteId { get; init; }
 }
 
