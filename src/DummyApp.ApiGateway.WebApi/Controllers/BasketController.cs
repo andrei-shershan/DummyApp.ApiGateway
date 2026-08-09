@@ -131,6 +131,64 @@ public sealed class BasketController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("address")]
+    [ProducesResponseType(typeof(OrderAddressDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAddress()
+    {
+        var basketId = Request.Cookies[BasketCookieName];
+        if (!Guid.TryParse(basketId, out var orderId))
+        {
+            return NotFound();
+        }
+
+        var address = await _mediator.Send(new GetOrderAddressQuery(orderId));
+        if (address is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(address);
+    }
+
+    [HttpPost("address")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SaveAddress([FromBody] SaveBasketAddressRequest request)
+    {
+        if (request is null)
+        {
+            return BadRequest("Address is required.");
+        }
+
+        var basketId = Request.Cookies[BasketCookieName];
+        if (!Guid.TryParse(basketId, out var orderId))
+        {
+            return BadRequest("Basket is required to save address.");
+        }
+
+        var address = new OrderAddressDto
+        {
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Phone = request.Phone,
+            Email = request.Email,
+            Country = request.Country,
+            City = request.City,
+            Street = request.Street,
+            HouseNumber = request.HouseNumber,
+            PostalCode = request.PostalCode
+        };
+
+        var result = await _mediator.Send(new SaveOrderAddressCommand(orderId, address));
+        if (!result)
+        {
+            return BadRequest("Unable to save basket address.");
+        }
+
+        return Ok();
+    }
+
     [HttpPost("checkout")]
     [ProducesResponseType(typeof(CheckoutResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -204,6 +262,33 @@ public sealed class BasketController : ControllerBase
             }
         };
 
+        if (summary.Address is not null)
+        {
+            var address = summary.Address;
+            sessionOptions.CustomerEmail = address.Email;
+            sessionOptions.PaymentIntentData = new SessionPaymentIntentDataOptions
+            {
+                ReceiptEmail = address.Email,
+                Shipping = new ChargeShippingOptions
+                {
+                    Name = $"{address.FirstName} {address.LastName}",
+                    Phone = address.Phone,
+                    Address = new AddressOptions
+                    {
+                        Line1 = $"{address.Street} {address.HouseNumber}".Trim(),
+                        City = address.City,
+                        Country = address.Country,
+                        PostalCode = address.PostalCode
+                    }
+                }
+            };
+
+            sessionOptions.Metadata["customerName"] = $"{address.FirstName} {address.LastName}";
+            sessionOptions.Metadata["customerPhone"] = address.Phone;
+            sessionOptions.Metadata["customerEmail"] = address.Email;
+            sessionOptions.Metadata["shippingAddress"] = $"{address.Street} {address.HouseNumber}, {address.City}, {address.Country}, {address.PostalCode}";
+        }
+
         var session = await _stripeSessionService.CreateAsync(sessionOptions);
 
         return Ok(new CheckoutResponse(session.Url ?? string.Empty));
@@ -221,7 +306,8 @@ public sealed class BasketController : ControllerBase
         }
 
         if (!request.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase)
-            && !request.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+            && !request.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
+            && !request.Status.Equals("Address", StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogWarning("SetStatus failed due to unsupported status {Status}.", request.Status);
             return BadRequest("Invalid status.");

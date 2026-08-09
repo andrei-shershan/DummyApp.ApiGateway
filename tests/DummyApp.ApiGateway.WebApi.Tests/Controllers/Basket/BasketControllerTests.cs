@@ -303,14 +303,29 @@ public sealed class BasketControllerTests
             {
                 new OrderItemDto { OrderId = orderId, ArtworkId = Guid.NewGuid(), Quantity = 1, Name = "Art", Description = "Desc", PriceValue = 10m }
             },
-            Status = "Processing"
+            Status = "Processing",
+            Address = new OrderAddressDto
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Phone = "+48123123123",
+                Email = "john.doe@example.com",
+                Country = "PL",
+                City = "Warsaw",
+                Street = "Main",
+                HouseNumber = "10",
+                PostalCode = "00-001"
+            }
         };
 
         var mediatorMock = new Mock<IMediator>();
         mediatorMock.Setup(m => m.Send(It.IsAny<GetOrderSummaryQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(summary);
+
+        SessionCreateOptions? capturedOptions = null;
         var stripeSessionServiceMock = new Mock<IStripeSessionService>();
         stripeSessionServiceMock.Setup(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()))
+            .Callback<SessionCreateOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(new Session { Url = "https://checkout.stripe.com/pay/session-id" });
 
         var loggerMock = new Mock<ILogger<BasketController>>();
@@ -322,6 +337,15 @@ public sealed class BasketControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal("https://checkout.stripe.com/pay/session-id", ((CheckoutResponse)okResult.Value!).Url);
         stripeSessionServiceMock.Verify(s => s.CreateAsync(It.IsAny<SessionCreateOptions>()), Times.Once);
+
+        Assert.NotNull(capturedOptions);
+        Assert.Equal("john.doe@example.com", capturedOptions!.CustomerEmail);
+        Assert.NotNull(capturedOptions.PaymentIntentData);
+        Assert.Equal("John Doe", capturedOptions.PaymentIntentData!.Shipping?.Name);
+        Assert.Equal("John Doe", capturedOptions.Metadata["customerName"]);
+        Assert.Equal("+48123123123", capturedOptions.Metadata["customerPhone"]);
+        Assert.Equal("john.doe@example.com", capturedOptions.Metadata["customerEmail"]);
+        Assert.Contains("Warsaw", capturedOptions.Metadata["shippingAddress"]);
     }
 
     private static BasketController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<BasketController>> loggerMock, Mock<IStripeSessionService>? stripeSessionServiceMock = null, ApiGatewaySettings? settings = null)
