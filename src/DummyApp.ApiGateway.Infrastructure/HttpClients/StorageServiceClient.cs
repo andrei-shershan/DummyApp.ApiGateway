@@ -290,6 +290,42 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
+    public async Task<OrderAddressDto?> GetOrderAddressAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/orders/{orderId}/address", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var address = await response.Content.ReadFromJsonAsync<OrderAddressDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return address;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting order address.");
+            return null;
+        }
+    }
+
+    public async Task<bool> SaveOrderAddressAsync(Guid orderId, OrderAddressDto address, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"api/orders/{orderId}/address", address, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to save order address via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task<OrderStatusDto?> GetOrderStatusAsync(Guid orderId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync($"api/orders/{orderId}/status", cancellationToken);
