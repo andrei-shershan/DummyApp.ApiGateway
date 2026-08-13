@@ -64,6 +64,29 @@ public sealed class IdentityServiceClient : IIdentityServiceHttpClient
         }
     }
 
+    public async Task<UserDto?> GetUserByIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/admin/users/{userId}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to retrieve user {UserId} from Identity service. Status code: {StatusCode}", userId, response.StatusCode);
+            return null;
+        }
+
+        try
+        {
+            return await response.Content.ReadFromJsonAsync<UserDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read user response content from Identity service for user {UserId}.", userId);
+            return null;
+        }
+    }
+
     public async Task<bool> SaveInviteTokenAsync(string email, string token, CancellationToken cancellationToken)
     {
         var request = new { Email = email, Token = token };
