@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddOptions<EmailServiceOptions>()
             .Bind(configuration.GetSection(nameof(ApiGatewaySettings.EmailService)));
 
+        services.AddOptions<InviteOptions>();
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<ApiGatewaySettings>>().Value);
 
         return services;
@@ -98,6 +99,11 @@ public static class ServiceCollectionExtensions
             {
                 client.BaseAddress = new Uri(emailServiceBaseUrl);
             }
+        });
+
+        services.Configure<InviteOptions>(options =>
+        {
+            options.IdentityServiceBaseUrl = settings.Services.IdentityService.BaseUrl;
         });
 
         services.AddHttpClient("storage", client =>

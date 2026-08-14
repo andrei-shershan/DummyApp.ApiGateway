@@ -20,18 +20,11 @@ public sealed class EmailServiceClient : IEmailServiceHttpClient
         _emailServiceSecretKey = emailServiceOptions.Value.SecretKey;
     }
 
-public sealed class InviteEmailRequest
-{
-    public string Email { get; init; } = string.Empty;
-    public string Token { get; init; } = string.Empty;
-}
-
-    public async Task<bool> SendInviteAsync(string email, string token, CancellationToken cancellationToken)
+    public async Task<bool> SendEmailAsync(SendEmailRequest request, CancellationToken cancellationToken)
     {
-        var request = new InviteEmailRequest { Email = email, Token = token };
         var requestUri = string.IsNullOrWhiteSpace(_emailServiceSecretKey)
-            ? "api/email/invite"
-            : $"api/email/invite?code={Uri.EscapeDataString(_emailServiceSecretKey)}";
+            ? "api/email/send"
+            : $"api/email/send?code={Uri.EscapeDataString(_emailServiceSecretKey)}";
 
         var json = JsonSerializer.Serialize(request);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -39,18 +32,18 @@ public sealed class InviteEmailRequest
         var response = await _httpClient.PostAsync(requestUri, content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Failed to send invite email to {Email}. Status code: {StatusCode}, Reason: {ReasonPhrase}", email, response.StatusCode, response.ReasonPhrase);
+            _logger.LogError("Failed to send email to {Recipients}. Status code: {StatusCode}, Reason: {ReasonPhrase}", string.Join(", ", request.Recipients), response.StatusCode, response.ReasonPhrase);
             var requestBody = response.RequestMessage?.Content is not null
                 ? await response.RequestMessage.Content.ReadAsStringAsync(cancellationToken)
                 : null;
             _logger.LogError("Request body: {RequestBody}", requestBody);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError("Response body: {ResponseBody}", responseBody);
-            _logger.LogError("Email service returned status {StatusCode} for invite to {Email}.", response.StatusCode, email);
+            _logger.LogError("Email service returned status {StatusCode} for request to {RequestUri}.", response.StatusCode, requestUri);
             return false;
         }
 
-        _logger.LogInformation("Successfully sent invite email to {Email} with token {Token}", email, token);
+        _logger.LogInformation("Successfully sent email to {Recipients} using template {Template}.", string.Join(", ", request.Recipients), request.Template);
 
         return true;
     }
