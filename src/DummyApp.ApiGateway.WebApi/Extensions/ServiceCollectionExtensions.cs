@@ -1,4 +1,6 @@
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using DummyApp.ApiGateway.Infrastructure.Http;
 using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using DummyApp.ApiGateway.Infrastructure.Models;
@@ -8,6 +10,7 @@ using DummyApp.ApiGateway.WebApi.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using BlobStorageOptionsModel = DummyApp.ApiGateway.Infrastructure.Models.BlobStorageOptions;
+using ServiceBusConfigurationOptions = DummyApp.ApiGateway.Infrastructure.Models.ServiceBusOptions;
 
 namespace DummyApp.ApiGateway.WebApi.Extensions;
 
@@ -24,6 +27,15 @@ public static class ServiceCollectionExtensions
 
         services.AddOptions<EmailServiceOptions>()
             .Bind(configuration.GetSection(nameof(ApiGatewaySettings.EmailService)));
+
+        services.AddOptions<FileServiceOptions>()
+            .Bind(configuration.GetSection("FileService"));
+
+        services.AddOptions<OrderQRCodeOptions>()
+            .Bind(configuration);
+
+        services.AddOptions<ServiceBusConfigurationOptions>()
+            .Bind(configuration.GetSection(nameof(ApiGatewaySettings.ServiceBus)));
 
         services.AddOptions<InviteOptions>();
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<ApiGatewaySettings>>().Value);
@@ -100,6 +112,21 @@ public static class ServiceCollectionExtensions
                 client.BaseAddress = new Uri(emailServiceBaseUrl);
             }
         });
+
+        var fileServiceBaseUrl = settings.Services.FileService.BaseUrl;
+        services.AddHttpClient<IFileServiceHttpClient, FileServiceClient>(client =>
+        {
+            if (!string.IsNullOrWhiteSpace(fileServiceBaseUrl))
+            {
+                client.BaseAddress = new Uri(fileServiceBaseUrl);
+            }
+        });
+
+        if (!string.IsNullOrWhiteSpace(settings.ServiceBus.ConnectionString))
+        {
+            services.AddSingleton(new ServiceBusClient(settings.ServiceBus.ConnectionString));
+            services.AddHostedService<CompletedOrderEventsBackgroundService>();
+        }
 
         services.Configure<InviteOptions>(options =>
         {
