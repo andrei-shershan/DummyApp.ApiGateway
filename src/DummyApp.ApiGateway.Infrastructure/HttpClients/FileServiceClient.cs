@@ -42,4 +42,21 @@ public sealed class FileServiceClient : IFileServiceHttpClient
         var base64 = Convert.ToBase64String(bytes);
         return $"data:image/png;base64,{base64}";
     }
-}
+
+        public async Task<byte[]> GeneratePdfAsync(GeneratePdfRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            var requestUri = string.IsNullOrWhiteSpace(_fileServiceSecretKey)
+                ? "api/file/pdf"
+                : $"api/file/pdf?code={Uri.EscapeDataString(_fileServiceSecretKey)}";
+
+            var json = JsonSerializer.Serialize(request);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var response = await _httpClient.PostAsync(requestUri, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        }
+    }

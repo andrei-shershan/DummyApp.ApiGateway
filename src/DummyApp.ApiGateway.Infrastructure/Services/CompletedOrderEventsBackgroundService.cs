@@ -122,12 +122,36 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
             }
         }
 
+        SendEmailAttachment? pdfAttachment = null;
+        try
+        {
+            var pdfBytes = await _fileServiceClient.GeneratePdfAsync(new GeneratePdfRequest
+            {
+                Template = "OrderSummary",
+                Parameters = parameters
+            }, args.CancellationToken);
+
+            pdfAttachment = new SendEmailAttachment
+            {
+                Name = "order-summary.pdf",
+                ContentType = "application/pdf",
+                Base64Content = Convert.ToBase64String(pdfBytes)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate order summary PDF for message {MessageId}. Message will be abandoned.", message.MessageId);
+            await args.AbandonMessageAsync(message);
+            return;
+        }
+
         var emailRequest = new SendEmailRequest
         {
             Subject = $"Order {orderSummary.Status}",
             Recipients = new[] { orderSummary.Address.Email },
             Template = "CompletedOrder",
-            Parameters = parameters
+            Parameters = parameters,
+            Attachments = pdfAttachment is null ? Array.Empty<SendEmailAttachment>() : new[] { pdfAttachment }
         };
 
         var sendSuccess = false;
