@@ -12,8 +12,10 @@ public sealed record ApiGatewaySettings
     public ReverseProxyOptions ReverseProxy { get; init; } = new();
     public StripeOptions Stripe { get; init; } = new();
     public ApplicationOptions Application { get; init; } = new();
-
+    public ServiceBusOptions ServiceBus { get; init; } = new();
     public EmailServiceOptions EmailService { get; init; } = new();
+    public FileServiceOptions FileService { get; init; } = new();
+    public string? OrderQRCode { get; init; }
 }
 
 public sealed record KeyVaultOptions
@@ -44,6 +46,7 @@ public sealed record ServicesOptions
     public ServiceEndpointOptions BlobService { get; init; } = new();
     public ServiceEndpointOptions IdentityService { get; init; } = new();
     public ServiceEndpointOptions EmailService { get; init; } = new();
+    public ServiceEndpointOptions FileService { get; init; } = new();
 }
 
 public sealed record ServiceEndpointOptions
