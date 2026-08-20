@@ -151,6 +151,22 @@ public sealed class BasketController : ControllerBase
         return Ok(address);
     }
 
+    [HttpDelete("cookie")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult ClearBasketCookie()
+    {
+        Response.Cookies.Append(BasketCookieName, string.Empty, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = HttpContext.Request.IsHttps,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            Expires = DateTimeOffset.UnixEpoch
+        });
+
+        return NoContent();
+    }
+
     [HttpPost("address")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
