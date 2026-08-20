@@ -104,6 +104,22 @@ public sealed class BasketControllerTests
     }
 
     [Fact]
+    public void ClearBasketCookie_ReturnsNoContent_AndSetsExpiredCookie()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        var loggerMock = new Mock<ILogger<BasketController>>();
+        var controller = CreateController(mediatorMock, loggerMock);
+
+        var result = controller.ClearBasketCookie();
+
+        Assert.IsType<NoContentResult>(result);
+        Assert.True(controller.Response.Headers.ContainsKey("Set-Cookie"));
+        var setCookieHeader = controller.Response.Headers["Set-Cookie"].ToString();
+        Assert.Contains("BasketId=", setCookieHeader);
+        Assert.True(setCookieHeader.Contains("Expires=Thu, 01 Jan 1970") || setCookieHeader.Contains("expires=Thu, 01 Jan 1970"));
+    }
+
+    [Fact]
     public async Task UpdateItem_ReturnsBadRequest_WhenRequestIsInvalid()
     {
         var mediatorMock = new Mock<IMediator>();
