@@ -54,6 +54,7 @@ public sealed class GetBasketSummaryTests
         var summary = new OrderSummaryDto
         {
             Status = "Active",
+            Email = "customer@example.com",
             Items = new[]
             {
                 new OrderItemDto { OrderId = orderId, ArtworkId = Guid.NewGuid(), Quantity = 1, Name = "Test art", Description = "Desc", ImgUrl = "img", ThumbnailUrl = "thumb" }
@@ -73,6 +74,7 @@ public sealed class GetBasketSummaryTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         var returnedSummary = Assert.IsType<OrderSummaryDto>(okResult.Value);
         Assert.Equal(summary.Status, returnedSummary.Status);
+        Assert.Equal(summary.Email, returnedSummary.Email);
         Assert.Equal(summary.Items, returnedSummary.Items);
     }
 
