@@ -326,6 +326,30 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         return true;
     }
 
+    public async Task<bool> CreateVerificationCodeAsync(string email, string code, DateTime expiresAt, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/verification", new { Email = email, Code = code, ExpiresAt = expiresAt }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to create verification code via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    public async Task<bool> VerifyVerificationCodeAsync(string email, string code, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/verification/verify", new { Email = email, Code = code }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to verify verification code via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task<OrderStatusDto?> GetOrderStatusAsync(Guid orderId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync($"api/orders/{orderId}/status", cancellationToken);
