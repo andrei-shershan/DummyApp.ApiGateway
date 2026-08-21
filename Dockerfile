@@ -10,22 +10,22 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-# This stage is used to build the service project
+# Build stage optimized for local development
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG BUILD_CONFIGURATION=Release
+ARG BUILD_CONFIGURATION=Debug
 WORKDIR /src
 COPY ["src/DummyApp.ApiGateway.WebApi/DummyApp.ApiGateway.WebApi.csproj", "src/DummyApp.ApiGateway.WebApi/"]
+COPY ["src/DummyApp.ApiGateway.Infrastructure/DummyApp.ApiGateway.Infrastructure.csproj", "src/DummyApp.ApiGateway.Infrastructure/"]
 RUN dotnet restore "./src/DummyApp.ApiGateway.WebApi/DummyApp.ApiGateway.WebApi.csproj"
-COPY . .
+COPY ["src/DummyApp.ApiGateway.WebApi/", "src/DummyApp.ApiGateway.WebApi/"]
+COPY ["src/DummyApp.ApiGateway.Infrastructure/", "src/DummyApp.ApiGateway.Infrastructure/"]
 WORKDIR "/src/src/DummyApp.ApiGateway.WebApi"
 RUN dotnet build "./DummyApp.ApiGateway.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
+ARG BUILD_CONFIGURATION=Debug
 RUN dotnet publish "./DummyApp.ApiGateway.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
