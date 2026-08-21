@@ -1,3 +1,4 @@
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using DummyApp.ApiGateway.WebApi.Controllers;
 using DummyApp.ApiGateway.WebApi.Models;
 using MediatR;
@@ -65,15 +66,15 @@ public sealed class VerificationControllerTests
         var result = await controller.VerifyVerificationCode(null!);
 
         Assert.IsType<BadRequestObjectResult>(result);
-        mediatorMock.Verify(m => m.Send(It.IsAny<IRequest<bool>>(), It.IsAny<CancellationToken>()), Times.Never);
+        mediatorMock.Verify(m => m.Send(It.IsAny<IRequest<VerifyVerificationCodeResult>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task VerifyVerificationCode_ReturnsBadRequest_WhenMediatorReturnsFalse()
+    public async Task VerifyVerificationCode_ReturnsBadRequest_WhenMediatorReturnsFailureResult()
     {
         var mediatorMock = new Mock<IMediator>();
-        mediatorMock.Setup(m => m.Send(It.IsAny<IRequest<bool>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        mediatorMock.Setup(m => m.Send(It.IsAny<IRequest<VerifyVerificationCodeResult>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VerifyVerificationCodeResult { Success = false, ErrorMessage = "Invalid or expired verification code." });
 
         var loggerMock = new Mock<ILogger<VerificationController>>();
         var controller = CreateController(mediatorMock, loggerMock);
@@ -84,11 +85,32 @@ public sealed class VerificationControllerTests
     }
 
     [Fact]
-    public async Task VerifyVerificationCode_ReturnsOk_AndSetsCompletedOrdersCookie_WhenMediatorReturnsTrue()
+    public async Task VerifyVerificationCode_ReturnsInternalServerError_WhenMediatorReturnsServerError()
     {
         var mediatorMock = new Mock<IMediator>();
-        mediatorMock.Setup(m => m.Send(It.IsAny<IRequest<bool>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        mediatorMock.Setup(m => m.Send(It.IsAny<IRequest<VerifyVerificationCodeResult>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VerifyVerificationCodeResult { Success = false, IsServerError = true, ErrorMessage = "Unable to persist completed orders token." });
+
+        var loggerMock = new Mock<ILogger<VerificationController>>();
+        var controller = CreateController(mediatorMock, loggerMock);
+
+        var result = await controller.VerifyVerificationCode(new VerifyVerificationCodeRequest { Email = "admin@example.com", Code = "123456" });
+
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, statusResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task VerifyVerificationCode_ReturnsOk_AndSetsCompletedOrdersCookie_WhenMediatorReturnsSuccess()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock.Setup(m => m.Send(It.IsAny<IRequest<VerifyVerificationCodeResult>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VerifyVerificationCodeResult
+            {
+                Success = true,
+                Token = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                ExpiresAt = DateTime.UtcNow.AddDays(1)
+            });
 
         var loggerMock = new Mock<ILogger<VerificationController>>();
         var controller = CreateController(mediatorMock, loggerMock);
@@ -97,7 +119,9 @@ public sealed class VerificationControllerTests
 
         Assert.IsType<OkResult>(result);
         Assert.True(controller.Response.Headers.ContainsKey("Set-Cookie"));
-        Assert.Contains("CompletedOrders=true", controller.Response.Headers["Set-Cookie"].ToString());
+        var cookieHeader = controller.Response.Headers["Set-Cookie"].ToString();
+        Assert.Contains("CompletedOrders=11111111-1111-1111-1111-111111111111", cookieHeader);
+        Assert.Contains("expires=", cookieHeader, StringComparison.OrdinalIgnoreCase);
     }
 
     private static VerificationController CreateController(Mock<IMediator> mediatorMock, Mock<ILogger<VerificationController>> loggerMock)

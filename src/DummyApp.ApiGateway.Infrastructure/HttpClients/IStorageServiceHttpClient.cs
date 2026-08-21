@@ -18,6 +18,7 @@ public interface IStorageServiceHttpClient
     Task<OrderAddressDto?> GetOrderAddressAsync(Guid orderId, CancellationToken cancellationToken);
     Task<bool> SaveOrderAddressAsync(Guid orderId, OrderAddressDto address, CancellationToken cancellationToken);
     Task<bool> CreateVerificationCodeAsync(string email, string code, DateTime expiresAt, CancellationToken cancellationToken);
+    Task<bool> CreateCompletedOrdersTokenAsync(string email, Guid token, DateTime expiresAt, CancellationToken cancellationToken);
     Task<bool> VerifyVerificationCodeAsync(string email, string code, CancellationToken cancellationToken);
     Task<OrderStatusDto?> GetOrderStatusAsync(Guid orderId, CancellationToken cancellationToken);
     Task<bool> SetOrderStatusAsync(Guid orderId, string status, CancellationToken cancellationToken);
