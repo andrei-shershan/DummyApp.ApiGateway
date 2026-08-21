@@ -65,14 +65,16 @@ public sealed class VerificationController : ControllerBase
                 : BadRequest(result?.ErrorMessage ?? "Invalid or expired verification code.");
         }
 
-        Response.Cookies.Append(CompletedOrdersCookieName, result.Token.ToString("D"), new CookieOptions
+        var cookieOptions = new CookieOptions
         {
             HttpOnly = false,
             Secure = HttpContext.Request.IsHttps,
             SameSite = SameSiteMode.None,
             Path = "/",
             Expires = result.ExpiresAt
-        });
+        };
+
+        Response.Cookies.Append(CompletedOrdersCookieName, result.Token.ToString("D"), cookieOptions);
 
         return Ok();
     }

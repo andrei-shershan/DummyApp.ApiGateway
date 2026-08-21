@@ -65,6 +65,7 @@ public sealed record StripeOptions
 public sealed record ApplicationOptions
 {
     public string? SiteId { get; init; }
+    public string? CookieDomain { get; init; }
 }
 
 public sealed record ReverseProxyOptions

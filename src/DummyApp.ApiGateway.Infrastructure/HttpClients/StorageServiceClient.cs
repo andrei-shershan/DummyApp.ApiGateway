@@ -290,6 +290,30 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
+    public async Task<IEnumerable<OrderSummaryDto>?> GetCompletedOrdersByTokenAsync(Guid token, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync($"api/orders/completed/{token}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var summaries = await response.Content.ReadFromJsonAsync<IEnumerable<OrderSummaryDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return summaries;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting completed orders.");
+            return null;
+        }
+    }
+
     public async Task<OrderAddressDto?> GetOrderAddressAsync(Guid orderId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync($"api/orders/{orderId}/address", cancellationToken);
