@@ -338,6 +338,18 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         return true;
     }
 
+    public async Task<bool> CreateCompletedOrdersTokenAsync(string email, Guid token, DateTime expiresAt, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/verification/completed-orders", new { Email = email, Token = token, ExpiresAt = expiresAt }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to create completed orders token via storage service. Status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task<bool> VerifyVerificationCodeAsync(string email, string code, CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync("api/verification/verify", new { Email = email, Code = code }, cancellationToken);

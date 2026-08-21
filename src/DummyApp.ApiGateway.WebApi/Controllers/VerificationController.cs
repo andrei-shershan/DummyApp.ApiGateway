@@ -57,19 +57,21 @@ public sealed class VerificationController : ControllerBase
         }
 
         var command = new VerifyVerificationCodeCommand(request.Email.Trim(), request.Code.Trim());
-        var verified = await _mediator.Send(command);
-        if (!verified)
+        var result = await _mediator.Send(command);
+        if (result is null || !result.Success)
         {
-            return BadRequest("Invalid or expired verification code.");
+            return result?.IsServerError == true
+                ? StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessage ?? "Unable to verify verification code.")
+                : BadRequest(result?.ErrorMessage ?? "Invalid or expired verification code.");
         }
 
-        Response.Cookies.Append(CompletedOrdersCookieName, "true", new CookieOptions
+        Response.Cookies.Append(CompletedOrdersCookieName, result.Token.ToString("D"), new CookieOptions
         {
             HttpOnly = false,
             Secure = HttpContext.Request.IsHttps,
             SameSite = SameSiteMode.None,
             Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddDays(30)
+            Expires = result.ExpiresAt
         });
 
         return Ok();
