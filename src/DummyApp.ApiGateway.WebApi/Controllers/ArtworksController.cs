@@ -83,6 +83,15 @@ public sealed class ArtworksController : ControllerBase
         return Created($"api/artworks/{result.Id}", result);
     }
 
+    [HttpGet("pre-requisit")]
+    [Authorize(Roles = RoleNames.Admin + "," + RoleNames.Creator)]
+    [ProducesResponseType(typeof(IEnumerable<TagGroupDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetArtworkPrerequisites()
+    {
+        var result = await _mediator.Send(new GetArtworkPrerequisiteQuery());
+        return Ok(result);
+    }
+
     [HttpPut("{id}/active")]
     [Authorize(Roles = RoleNames.Creator + "," + RoleNames.Admin)]
     [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]

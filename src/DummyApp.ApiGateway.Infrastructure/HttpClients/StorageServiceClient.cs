@@ -163,6 +163,30 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
+    public async Task<IEnumerable<TagDto>?> GetTagsAsync(CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync("api/tags", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var tags = await response.Content.ReadFromJsonAsync<IEnumerable<TagDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return tags;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting tags.");
+            return null;
+        }
+    }
+
     public async Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, int? printSizeId, int? priceId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync($"api/orders/{orderId}/items", new { ArtworkId = artworkId, Quantity = quantity, PrintSizeId = printSizeId, PriceId = priceId }, cancellationToken);
