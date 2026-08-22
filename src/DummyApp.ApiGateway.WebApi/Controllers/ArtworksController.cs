@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Claims;
 using DummyApp.ApiGateway.Infrastructure.Constants;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
@@ -64,6 +65,13 @@ public sealed class ArtworksController : ControllerBase
             return Forbid();
         }
 
+        var totalTagCount = (body.ExistingTagIds?.Count() ?? 0) + (body.NewTags?.Count() ?? 0);
+        if (totalTagCount > 10)
+        {
+            _logger.LogWarning("CreateArtwork failed: too many tags provided. Count={TotalTagCount}", totalTagCount);
+            return BadRequest("A maximum of 10 tags is allowed.");
+        }
+
         var command = new CreateArtworkCommand(
             body.Name,
             body.FileName,
@@ -71,7 +79,9 @@ public sealed class ArtworksController : ControllerBase
             body.CreationDate,
             false, // isActive is set to false by default
             body.UploadedImage,
-            creatorId);
+            creatorId,
+            body.ExistingTagIds?.ToArray() ?? Array.Empty<Guid>(),
+            body.NewTags?.Select(t => new CreateArtworkTagDto(t.Name, t.Type)) ?? Array.Empty<CreateArtworkTagDto>());
 
         var result = await _mediator.Send(command);
         if (result is null)

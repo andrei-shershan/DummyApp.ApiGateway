@@ -43,6 +43,25 @@ public sealed class CreateArtworkTests : ArtworksControllerTestBase
     }
 
     [Fact]
+    public async Task CreateArtwork_TooManyTags_ReturnsBadRequestAndLogsWarning()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        var loggerMock = new Mock<ILogger<ArtworksController>>();
+        var controller = CreateController(mediatorMock, loggerMock, CreateUserWithId("creator-123"));
+
+        var request = CreateValidArtworkRequest();
+        request.ExistingTagIds = Enumerable.Range(0, 8).Select(_ => Guid.NewGuid()).ToArray();
+        request.NewTags = Enumerable.Range(0, 3).Select(_ => new NewTagRequest { Name = "Tag", Type = "None" }).ToArray();
+
+        var result = await controller.CreateArtwork(request);
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("A maximum of 10 tags is allowed.", badRequestResult.Value);
+        loggerMock.VerifyLog(LogLevel.Warning, "CreateArtwork failed: too many tags provided. Count=11", Times.Once());
+        mediatorMock.Verify(m => m.Send(It.IsAny<CreateArtworkCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task CreateArtwork_MediatorReturnsNull_LogsErrorAndReturnsBadRequest()
     {
         var mediatorMock = new Mock<IMediator>();

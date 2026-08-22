@@ -10,4 +10,6 @@ public sealed record CreateArtworkCommand(
     DateTime CreationDate,
     bool IsActive,
     string UploadedImage,
-    string CreatorId) : IRequest<ArtworkDto?>;
+    string CreatorId,
+    IEnumerable<Guid> ExistingTagIds,
+    IEnumerable<CreateArtworkTagDto> NewTags) : IRequest<ArtworkDto?>;
