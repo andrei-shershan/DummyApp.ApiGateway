@@ -50,6 +50,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<IStorageUrlService, StorageUrlService>();
         services.AddScoped<IArtworkQueryFilterService, ArtworkQueryFilterService>();
+        services.AddScoped<ITagFilterService, TagFilterService>();
         services.AddScoped<IStripeSessionService, StripeSessionService>();
         services.AddSingleton(new ClientCredentialsTokenCacheOptions
         {
