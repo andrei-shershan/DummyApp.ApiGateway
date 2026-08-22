@@ -1,7 +1,6 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
-using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using Microsoft.Extensions.Logging;
@@ -140,30 +139,6 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<IEnumerable<SeriesDto>?> GetSeriesAsync(string creatorId, CancellationToken cancellationToken)
-    {
-        var response = await _httpClient.GetAsync($"api/series?creatorId={Uri.EscapeDataString(creatorId)}", cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
-
-        try
-        {
-            var series = await response.Content.ReadFromJsonAsync<IEnumerable<SeriesDto>>(new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }, cancellationToken);
-
-            return series;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to read response content from storage service.");
-            return null;
-        }
-    }
-
     public async Task<IEnumerable<PrintSizeDto>?> GetPrintSizesAsync(CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync("api/printsizes", cancellationToken);
@@ -184,31 +159,6 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to read response content from storage service when getting print sizes.");
-            return null;
-        }
-    }
-
-    public async Task<SeriesDto?> CreateSeriesAsync(string name, CancellationToken cancellationToken)
-    {
-        var response = await _httpClient.PostAsJsonAsync("api/series", new { Name = name }, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to create series via storage service. Status code: {StatusCode}", response.StatusCode);
-            return null;
-        }
-
-        try
-        {
-            var series = await response.Content.ReadFromJsonAsync<SeriesDto>(new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }, cancellationToken);
-
-            return series;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to read response content from storage service when creating series.");
             return null;
         }
     }
