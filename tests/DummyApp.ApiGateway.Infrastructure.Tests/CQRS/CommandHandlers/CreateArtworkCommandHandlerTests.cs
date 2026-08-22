@@ -33,7 +33,6 @@ public class HandleTests
             CreationDate: DateTime.UtcNow,
             IsActive: true,
             UploadedImage: "data",
-            SeriesName: null,
             CreatorId: "creator");
 
         var result = await handler.Handle(command, None);
@@ -55,7 +54,6 @@ public class HandleTests
             CreationDate: DateTime.UtcNow,
             IsActive: true,
             UploadedImage: "data",
-            SeriesName: null,
             CreatorId: "creator");
 
         var result = await handler.Handle(command, None);
@@ -81,7 +79,6 @@ public class HandleTests
             CreationDate: DateTime.UtcNow,
             IsActive: true,
             UploadedImage: "data",
-            SeriesName: null,
             CreatorId: "creator");
 
         var result = await handler.Handle(command, None);
@@ -110,7 +107,6 @@ public class HandleTests
             CreationDate: DateTime.UtcNow,
             IsActive: true,
             UploadedImage: "data",
-            SeriesName: null,
             CreatorId: "creator");
 
         var result = await handler.Handle(command, None);
@@ -139,7 +135,9 @@ public class HandleTests
             Description: "desc",
             CreationDate: DateTime.UtcNow,
             IsActive: true,
-            UploadedImage: "data",            SeriesName: null,            CreatorId: "creator");
+            UploadedImage: "data",
+            CreatorId: "creator");
+
 
         var result = await handler.Handle(command, None);
 

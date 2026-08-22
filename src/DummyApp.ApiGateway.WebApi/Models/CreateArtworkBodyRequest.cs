@@ -12,9 +12,6 @@ public sealed class CreateArtworkBodyRequest
     [StringLength(1000, ErrorMessage = "Description must be 1000 characters or fewer.")]
     public string Description { get; init; } = string.Empty;
 
-    [StringLength(100, ErrorMessage = "Series name must be 100 characters or fewer.")]
-    public string? SeriesName { get; init; }
-
     public string FileName { get; init; } = string.Empty;
 
     [Required]
