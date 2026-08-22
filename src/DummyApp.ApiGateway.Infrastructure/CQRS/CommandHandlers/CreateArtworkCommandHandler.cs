@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
@@ -45,17 +47,18 @@ public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkC
             return null;
         }
 
-        var createArtwork = new ArtworkDto
-        {
-            CreatorId = request.CreatorId,
-            CreationDate = request.CreationDate,
-            Description = request.Description,
-            ImgUrl = uploadResult.Url,
-            IsActive = request.IsActive,
-            Name = request.Name,
-            ThumbnailUrl = uploadResult.ThumbnailUrl,
-            UploadDate = DateTime.UtcNow
-        };
+        var createArtwork = new CreateArtworkRequestDto(
+            request.Name,
+            request.FileName,
+            request.Description,
+            request.CreationDate,
+            DateTime.UtcNow,
+            uploadResult.Url,
+            uploadResult.ThumbnailUrl,
+            request.IsActive,
+            request.CreatorId,
+            request.ExistingTagIds ?? Enumerable.Empty<Guid>(),
+            request.NewTags ?? Enumerable.Empty<CreateArtworkTagDto>());
 
         var result = await _storageServiceClient.CreateArtworkAsync(createArtwork, cancellationToken);
         if (result is null)

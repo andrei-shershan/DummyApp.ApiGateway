@@ -19,4 +19,8 @@ public sealed class CreateArtworkBodyRequest
 
     [Required]
     public string UploadedImage { get; init; } = string.Empty;
+
+    public IEnumerable<Guid>? ExistingTagIds { get; init; }
+
+    public IEnumerable<NewTagRequest>? NewTags { get; init; }
 }

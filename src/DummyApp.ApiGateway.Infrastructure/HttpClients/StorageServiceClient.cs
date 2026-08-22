@@ -18,7 +18,7 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         _logger = logger;
     }
 
-    public async Task<ArtworkDto?> CreateArtworkAsync(ArtworkDto artwork, CancellationToken cancellationToken)
+    public async Task<ArtworkDto?> CreateArtworkAsync(CreateArtworkRequestDto artwork, CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync("api/artworks", artwork, cancellationToken);
         if (!response.IsSuccessStatusCode)

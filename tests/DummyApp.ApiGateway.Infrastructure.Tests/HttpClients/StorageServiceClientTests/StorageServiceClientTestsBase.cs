@@ -12,8 +12,11 @@ public abstract class StorageServiceClientTestsBase
         => new StorageServiceClient(CreateHttpClient(response), LoggerMock.Object);
 
     protected static HttpClient CreateHttpClient(HttpResponseMessage response)
+        => CreateHttpClient(response, null);
+
+    protected static HttpClient CreateHttpClient(HttpResponseMessage response, Func<HttpRequestMessage, Task>? onRequest)
     {
-        var handler = new TestHttpMessageHandler(response);
+        var handler = new TestHttpMessageHandler(response, onRequest);
         return new HttpClient(handler)
         {
             BaseAddress = new Uri("https://storageservice.local/")
@@ -43,13 +46,22 @@ public abstract class StorageServiceClientTestsBase
     private sealed class TestHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpResponseMessage _response;
+        private readonly Func<HttpRequestMessage, Task>? _onRequest;
 
-        public TestHttpMessageHandler(HttpResponseMessage response)
+        public TestHttpMessageHandler(HttpResponseMessage response, Func<HttpRequestMessage, Task>? onRequest)
         {
             _response = response;
+            _onRequest = onRequest;
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(_response);
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (_onRequest is not null)
+            {
+                await _onRequest(request);
+            }
+
+            return _response;
+        }
     }
 }
