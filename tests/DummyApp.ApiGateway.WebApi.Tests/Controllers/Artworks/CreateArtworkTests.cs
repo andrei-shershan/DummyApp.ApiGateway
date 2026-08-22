@@ -49,9 +49,16 @@ public sealed class CreateArtworkTests : ArtworksControllerTestBase
         var loggerMock = new Mock<ILogger<ArtworksController>>();
         var controller = CreateController(mediatorMock, loggerMock, CreateUserWithId("creator-123"));
 
-        var request = CreateValidArtworkRequest();
-        request.ExistingTagIds = Enumerable.Range(0, 8).Select(_ => Guid.NewGuid()).ToArray();
-        request.NewTags = Enumerable.Range(0, 3).Select(_ => new NewTagRequest { Name = "Tag", Type = "None" }).ToArray();
+        var request = new CreateArtworkBodyRequest
+        {
+            Name = "Name",
+            Description = "Description",
+            FileName = "file.png",
+            CreationDate = DateTime.UtcNow,
+            UploadedImage = "base64image",
+            ExistingTagIds = Enumerable.Range(0, 8).Select(_ => Guid.NewGuid()).ToArray(),
+            NewTags = Enumerable.Range(0, 3).Select(_ => new NewTagRequest { Name = "Tag", Type = "None" }).ToArray()
+        };
 
         var result = await controller.CreateArtwork(request);
 
