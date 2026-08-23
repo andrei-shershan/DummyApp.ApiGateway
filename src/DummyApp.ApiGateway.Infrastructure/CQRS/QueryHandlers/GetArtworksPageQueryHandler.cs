@@ -29,7 +29,7 @@ public sealed class GetArtworksPageQueryHandler : IRequestHandler<GetArtworksPag
 
         if (activeOnly)
         {
-            var pagedResult = await _storageServiceClient.GetArtworksPageAsync(request.CreatorId, activeOnly, request.PageNumber, request.PageSize, cancellationToken);
+            var pagedResult = await _storageServiceClient.GetArtworksPageAsync(request.CreatorId, activeOnly, request.PageNumber, request.PageSize, request.TagIds, cancellationToken);
             if (pagedResult is null)
             {
                 return new PaginatedResult<ArtworkDto>(Array.Empty<ArtworkDto>(), request.PageNumber, request.PageSize, 0);

@@ -139,7 +139,7 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
-    public async Task<PaginatedResult<ArtworkDto>?> GetArtworksPageAsync(string? creatorId, bool isActive, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<ArtworkDto>?> GetArtworksPageAsync(string? creatorId, bool isActive, int pageNumber, int pageSize, IEnumerable<Guid>? tagIds, CancellationToken cancellationToken)
     {
         var queryParams = new List<string>();
 
@@ -151,6 +151,17 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         queryParams.Add($"isActive={isActive.ToString().ToLowerInvariant()}");
         queryParams.Add($"pageNumber={pageNumber}");
         queryParams.Add($"pageSize={pageSize}");
+
+        if (tagIds?.Any() == true)
+        {
+            foreach (var tagId in tagIds)
+            {
+                if (tagId != Guid.Empty)
+                {
+                    queryParams.Add($"tagIds={tagId}");
+                }
+            }
+        }
 
         var requestUri = "api/artworks/page";
         if (queryParams.Count > 0)
@@ -224,6 +235,30 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to read response content from storage service when getting tags.");
+            return null;
+        }
+    }
+
+    public async Task<IEnumerable<TagDto>?> GetFilteredTagsAsync(CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync("api/tags/filters", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var tags = await response.Content.ReadFromJsonAsync<IEnumerable<TagDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return tags;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service when getting filtered tags.");
             return null;
         }
     }

@@ -36,9 +36,9 @@ public sealed class ArtworksController : ControllerBase
     [HttpGet("page")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(PaginatedResult<ArtworkDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetArtworksPage([FromQuery] string? creatorId, [FromQuery] bool isActive = true, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetArtworksPage([FromQuery] string? creatorId, [FromQuery] bool isActive = true, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] IEnumerable<Guid>? tagIds = null)
     {
-        var pageResult = await _mediator.Send(new GetArtworksPageQuery(creatorId, isActive, pageNumber, pageSize));
+        var pageResult = await _mediator.Send(new GetArtworksPageQuery(creatorId, isActive, pageNumber, pageSize, tagIds));
         return Ok(pageResult);
     }
 
@@ -108,6 +108,15 @@ public sealed class ArtworksController : ControllerBase
     public async Task<IActionResult> GetArtworkPrerequisites()
     {
         var result = await _mediator.Send(new GetArtworkPrerequisiteQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("filters")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IEnumerable<TagGroupDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetArtworkFilters()
+    {
+        var result = await _mediator.Send(new GetArtworkFiltersQuery());
         return Ok(result);
     }
 
