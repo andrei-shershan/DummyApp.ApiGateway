@@ -41,7 +41,7 @@ public sealed class GetArtworksPageQueryHandlerTests
             .Returns(true);
 
         _storageServiceClientMock
-            .Setup(x => x.GetArtworksPageAsync("creator", true, 2, 5, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetArtworksPageAsync("creator", true, 2, 5, It.IsAny<IEnumerable<Guid>?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PaginatedResult<ArtworkDto>(new[] { artwork }, 2, 5, 7));
 
         _artworkQueryFilterServiceMock
@@ -66,5 +66,76 @@ public sealed class GetArtworksPageQueryHandlerTests
         Assert.Single(result.Items);
         Assert.Equal("https://storage.example.com/blob/path.png", result.Items.Single().ImgUrl);
         Assert.Equal("https://storage.example.com/small/blob.png", result.Items.Single().ThumbnailUrl);
+    }
+
+    [Fact]
+    public async Task Handle_WhenActiveOnlyIsFalse_FiltersAndPaginatesResults()
+    {
+        var firstArtwork = new ArtworkDto
+        {
+            Id = Guid.NewGuid(),
+            CreatorId = "creator",
+            Name = "First",
+            Description = "desc1",
+            CreationDate = DateTime.UtcNow,
+            UploadDate = DateTime.UtcNow,
+            ImgUrl = "img1.png",
+            ThumbnailUrl = "thumb1.png",
+            IsActive = false
+        };
+
+        var secondArtwork = new ArtworkDto
+        {
+            Id = Guid.NewGuid(),
+            CreatorId = "creator",
+            Name = "Second",
+            Description = "desc2",
+            CreationDate = DateTime.UtcNow,
+            UploadDate = DateTime.UtcNow,
+            ImgUrl = "img2.png",
+            ThumbnailUrl = "thumb2.png",
+            IsActive = false
+        };
+
+        var thirdArtwork = new ArtworkDto
+        {
+            Id = Guid.NewGuid(),
+            CreatorId = "creator",
+            Name = "Third",
+            Description = "desc3",
+            CreationDate = DateTime.UtcNow,
+            UploadDate = DateTime.UtcNow,
+            ImgUrl = "img3.png",
+            ThumbnailUrl = "thumb3.png",
+            IsActive = false
+        };
+
+        _artworkQueryFilterServiceMock
+            .Setup(x => x.ShouldRequestActiveOnly(false))
+            .Returns(false);
+
+        _storageServiceClientMock
+            .Setup(x => x.GetArtworksAsync("creator", false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { firstArtwork, secondArtwork, thirdArtwork });
+
+        _artworkQueryFilterServiceMock.Setup(x => x.CanAccessArtworkById(firstArtwork)).Returns(true);
+        _artworkQueryFilterServiceMock.Setup(x => x.CanAccessArtworkById(secondArtwork)).Returns(false);
+        _artworkQueryFilterServiceMock.Setup(x => x.CanAccessArtworkById(thirdArtwork)).Returns(true);
+
+        _storageUrlServiceMock
+            .Setup(x => x.GetBlobUrl(It.IsAny<string>()))
+            .Returns<string>(url => $"https://storage.example.com/{url}");
+
+        var handler = CreateHandler();
+
+        var result = await handler.Handle(new GetArtworksPageQuery("creator", false, 2, 1), CancellationToken.None);
+
+        Assert.Equal(2, result.PageNumber);
+        Assert.Equal(1, result.PageSize);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Single(result.Items);
+        Assert.Equal(thirdArtwork.Id, result.Items.Single().Id);
+        Assert.Equal("https://storage.example.com/img3.png", result.Items.Single().ImgUrl);
+        Assert.Equal("https://storage.example.com/thumb3.png", result.Items.Single().ThumbnailUrl);
     }
 }
