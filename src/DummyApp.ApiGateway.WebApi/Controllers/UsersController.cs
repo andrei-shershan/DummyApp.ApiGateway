@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using DummyApp.ApiGateway.Infrastructure.Constants;
+using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -38,4 +39,31 @@ public sealed class UsersController : ControllerBase
 
         return Ok(profile);
     }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateCurrentUserProfile([FromBody] UpdateCurrentUserProfileRequest? request, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Forbid();
+        }
+
+        if (request is null || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName))
+        {
+            return BadRequest("FirstName and LastName are required.");
+        }
+
+        var updatedProfile = await _mediator.Send(new UpdateUserProfileCommand(userId, request.FirstName.Trim(), request.LastName.Trim()), cancellationToken);
+        if (updatedProfile is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(updatedProfile);
+    }
+
+    public sealed record UpdateCurrentUserProfileRequest(string FirstName, string LastName);
 }
