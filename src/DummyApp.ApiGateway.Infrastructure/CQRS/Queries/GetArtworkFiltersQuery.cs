@@ -3,4 +3,4 @@ using MediatR;
 
 namespace DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
 
-public sealed record GetArtworkFiltersQuery() : IRequest<IEnumerable<TagGroupDto>>;
+public sealed record GetArtworkFiltersQuery() : IRequest<ArtworkFiltersDto>;

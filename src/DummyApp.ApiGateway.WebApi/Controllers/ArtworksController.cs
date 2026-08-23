@@ -113,7 +113,7 @@ public sealed class ArtworksController : ControllerBase
 
     [HttpGet("filters")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(IEnumerable<TagGroupDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ArtworkFiltersDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetArtworkFilters()
     {
         var result = await _mediator.Send(new GetArtworkFiltersQuery());
