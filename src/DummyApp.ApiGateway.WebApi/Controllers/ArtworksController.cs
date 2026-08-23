@@ -33,6 +33,15 @@ public sealed class ArtworksController : ControllerBase
         return Ok(artworks);
     }
 
+    [HttpGet("page")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PaginatedResult<ArtworkDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetArtworksPage([FromQuery] string? creatorId, [FromQuery] bool isActive = true, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var pageResult = await _mediator.Send(new GetArtworksPageQuery(creatorId, isActive, pageNumber, pageSize));
+        return Ok(pageResult);
+    }
+
     [HttpGet("{id}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ArtworkDto), StatusCodes.Status200OK)]

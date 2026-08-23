@@ -139,6 +139,47 @@ public sealed class StorageServiceClient : IStorageServiceHttpClient
         }
     }
 
+    public async Task<PaginatedResult<ArtworkDto>?> GetArtworksPageAsync(string? creatorId, bool isActive, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    {
+        var queryParams = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(creatorId))
+        {
+            queryParams.Add($"creatorId={Uri.EscapeDataString(creatorId)}");
+        }
+
+        queryParams.Add($"isActive={isActive.ToString().ToLowerInvariant()}");
+        queryParams.Add($"pageNumber={pageNumber}");
+        queryParams.Add($"pageSize={pageSize}");
+
+        var requestUri = "api/artworks/page";
+        if (queryParams.Count > 0)
+        {
+            requestUri += "?" + string.Join("&", queryParams);
+        }
+
+        var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        try
+        {
+            var pagedResult = await response.Content.ReadFromJsonAsync<PaginatedResult<ArtworkDto>>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+
+            return pagedResult;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read response content from storage service.");
+            return null;
+        }
+    }
+
     public async Task<IEnumerable<PrintSizeDto>?> GetPrintSizesAsync(CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync("api/printsizes", cancellationToken);

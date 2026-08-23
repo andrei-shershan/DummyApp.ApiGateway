@@ -8,6 +8,7 @@ public interface IStorageServiceHttpClient
     Task<ArtworkDto?> UpdateArtworkIsActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken);
     Task<ArtworkDto?> GetArtworkByIdAsync(Guid id, bool activeOnly, CancellationToken cancellationToken);
     Task<IEnumerable<ArtworkDto>?> GetArtworksAsync(string? creatorId, bool isActive, CancellationToken cancellationToken);
+    Task<PaginatedResult<ArtworkDto>?> GetArtworksPageAsync(string? creatorId, bool isActive, int pageNumber, int pageSize, CancellationToken cancellationToken);
     Task<IEnumerable<PrintSizeDto>?> GetPrintSizesAsync(CancellationToken cancellationToken);
     Task<IEnumerable<TagDto>?> GetTagsAsync(CancellationToken cancellationToken);
     Task<bool> AddOrderItemAsync(Guid orderId, Guid artworkId, int quantity, int? printSizeId = null, int? priceId = null, CancellationToken cancellationToken = default);
