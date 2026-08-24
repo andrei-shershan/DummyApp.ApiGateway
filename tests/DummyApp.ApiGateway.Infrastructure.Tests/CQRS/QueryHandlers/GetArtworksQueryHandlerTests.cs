@@ -16,11 +16,10 @@ namespace DummyApp.ApiGateway.Infrastructure.Tests.CQRS.QueryHandlers;
 public class GetArtworksQueryHandlerTests
 {
     private readonly Mock<IStorageServiceHttpClient> _storageServiceClientMock = new();
-    private readonly Mock<IStorageUrlService> _storageUrlServiceMock = new();
     private readonly Mock<IArtworkQueryFilterService> _artworkQueryFilterServiceMock = new();
 
     private GetArtworksQueryHandler CreateHandler()
-        => new GetArtworksQueryHandler(_storageServiceClientMock.Object, _storageUrlServiceMock.Object, _artworkQueryFilterServiceMock.Object);
+        => new GetArtworksQueryHandler(_storageServiceClientMock.Object, _artworkQueryFilterServiceMock.Object);
 
     [Fact]
     public async Task Handle_ReturnsEmptyList_WhenStorageServiceReturnsNull()
@@ -57,21 +56,13 @@ public class GetArtworksQueryHandlerTests
             .Setup(x => x.CanAccessArtworkById(artwork))
             .Returns(true);
 
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl("blob/path.png"))
-            .Returns("https://storage.example.com/blob/path.png");
-
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl("small/blob.png"))
-            .Returns("https://storage.example.com/small/blob.png");
-
         var handler = CreateHandler();
         var result = await handler.Handle(new GetArtworksQuery(), CancellationToken.None);
 
         Assert.Single(result);
         var mapped = result.Single();
-        Assert.Equal("https://storage.example.com/blob/path.png", mapped.ImgUrl);
-        Assert.Equal("https://storage.example.com/small/blob.png", mapped.ThumbnailUrl);
+        Assert.Equal(artwork.ImgUrl, mapped.ImgUrl);
+        Assert.Equal(artwork.ThumbnailUrl, mapped.ThumbnailUrl);
         Assert.Equal(artwork.Id, mapped.Id);
         Assert.Equal(artwork.CreatorId, mapped.CreatorId);
         Assert.Equal(artwork.Name, mapped.Name);
@@ -115,14 +106,6 @@ public class GetArtworksQueryHandlerTests
         _artworkQueryFilterServiceMock
             .Setup(x => x.CanAccessArtworkById(blockedArtwork))
             .Returns(false);
-
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl("blob/path.png"))
-            .Returns("https://storage.example.com/blob/path.png");
-
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl("small/blob.png"))
-            .Returns("https://storage.example.com/small/blob.png");
 
         var handler = CreateHandler();
         var result = await handler.Handle(new GetArtworksQuery(), CancellationToken.None);

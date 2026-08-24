@@ -45,10 +45,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiGatewayServices(this IServiceCollection services, ApiGatewaySettings settings)
     {
-        ValidateBlobStorageSettings(settings.BlobStorage);
-
         services.AddHttpContextAccessor();
-        services.AddScoped<IStorageUrlService, StorageUrlService>();
         services.AddScoped<IArtworkQueryFilterService, ArtworkQueryFilterService>();
         services.AddScoped<ITagFilterService, TagFilterService>();
         services.AddScoped<IStripeSessionService, StripeSessionService>();
@@ -210,18 +207,4 @@ public static class ServiceCollectionExtensions
         return app;
     }
 
-    private static void ValidateBlobStorageSettings(BlobStorageOptionsModel options)
-    {
-        if (string.IsNullOrWhiteSpace(options.StorageUrl))
-        {
-            throw new InvalidOperationException(
-                $"Blob storage URL is not configured. Set {nameof(ApiGatewaySettings.BlobStorage)}__{nameof(BlobStorageOptions.StorageUrl)}.");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.ContainerName))
-        {
-            throw new InvalidOperationException(
-                $"Blob storage container name is not configured. Set {nameof(ApiGatewaySettings.BlobStorage)}__{nameof(BlobStorageOptions.ContainerName)}.");
-        }
-    }
 }

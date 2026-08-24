@@ -1,6 +1,7 @@
 using DummyApp.ApiGateway.Infrastructure.CQRS.CommandHandlers;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Commands;
 using DummyApp.ApiGateway.Infrastructure.HttpClients;
+using DummyApp.ApiGateway.Infrastructure.Models;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -31,6 +32,7 @@ public class HandleTests
             FileName: "   ",
             Description: "desc",
             CreationDate: DateTime.UtcNow,
+            ImageType: ImageType.Artwork,
             IsActive: true,
             UploadedImage: "data",
             CreatorId: "creator",
@@ -54,6 +56,7 @@ public class HandleTests
             FileName: "file",
             Description: "desc",
             CreationDate: DateTime.UtcNow,
+            ImageType: ImageType.Artwork,
             IsActive: true,
             UploadedImage: "data",
             CreatorId: "creator",
@@ -72,7 +75,7 @@ public class HandleTests
     public async Task Handle_ReturnsNull_WhenUploadImageFails()
     {
         _blobServiceClientMock
-            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))
+            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ImageType>(), None))
             .ReturnsAsync((ImageUploadResult?)null);
 
         var handler = CreateHandler();
@@ -81,6 +84,7 @@ public class HandleTests
             FileName: "file.png",
             Description: "desc",
             CreationDate: DateTime.UtcNow,
+            ImageType: ImageType.Artwork,
             IsActive: true,
             UploadedImage: "data",
             CreatorId: "creator",
@@ -102,7 +106,7 @@ public class HandleTests
     public async Task Handle_ReturnsNull_WhenUploadImageResultHasMissingUrlOrThumbnail(string? url, string? thumbnailUrl)
     {
         _blobServiceClientMock
-            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))
+            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ImageType>(), None))
             .ReturnsAsync(new ImageUploadResult(url, thumbnailUrl));
 
         var handler = CreateHandler();
@@ -111,6 +115,7 @@ public class HandleTests
             FileName: "file.png",
             Description: "desc",
             CreationDate: DateTime.UtcNow,
+            ImageType: ImageType.Artwork,
             IsActive: true,
             UploadedImage: "data",
             CreatorId: "creator",
@@ -128,7 +133,7 @@ public class HandleTests
     public async Task Handle_ReturnsNull_WhenStorageServiceReturnsNull()
     {
         _blobServiceClientMock
-            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), None))
+            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ImageType>(), None))
             .ReturnsAsync(new ImageUploadResult("https://example.com/blob.png", "https://example.com/blob-small.png"));
 
         _storageServiceClientMock
@@ -141,6 +146,7 @@ public class HandleTests
             FileName: "file.png",
             Description: "desc",
             CreationDate: DateTime.UtcNow,
+            ImageType: ImageType.Artwork,
             IsActive: true,
             UploadedImage: "data",
             CreatorId: "creator",
@@ -159,7 +165,7 @@ public class HandleTests
         var expected = new ArtworkDto { Id = Guid.NewGuid(), CreatorId = "creator", Name = "Test", Description = "desc", CreationDate = DateTime.UtcNow, UploadDate = DateTime.UtcNow, ImgUrl = "https://example.com/blob.png", ThumbnailUrl = "https://example.com/blob-small.png", IsActive = true };
 
         _blobServiceClientMock
-            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.Is<string>(name => name.EndsWith(".png")), None))
+            .Setup(x => x.UploadImageAsync(It.IsAny<string>(), It.Is<string>(name => name.EndsWith(".png")), It.IsAny<ImageType>(), None))
             .ReturnsAsync(new ImageUploadResult("https://example.com/blob.png", "https://example.com/blob-small.png"));
 
         var existingTagId = Guid.NewGuid();
@@ -185,6 +191,7 @@ public class HandleTests
             FileName: "file.png",
             Description: "desc",
             CreationDate: DateTime.UtcNow,
+            ImageType: ImageType.Artwork,
             IsActive: true,
             UploadedImage: "data",
             CreatorId: "creator",

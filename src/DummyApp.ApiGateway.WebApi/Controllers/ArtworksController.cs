@@ -86,6 +86,7 @@ public sealed class ArtworksController : ControllerBase
             body.FileName,
             body.Description,
             body.CreationDate,
+            body.ImageType,
             false, // isActive is set to false by default
             body.UploadedImage,
             creatorId,
