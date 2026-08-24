@@ -44,7 +44,10 @@ public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
 
         try
         {
-            var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>(cancellationToken: cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
             if (result is null || string.IsNullOrEmpty(result.Url) || string.IsNullOrEmpty(result.ThumbnailUrl))
             {
                 _logger.LogError("Unexpected response from BlobService when uploading image.");

@@ -124,6 +124,30 @@ public sealed class IdentityServiceClient : IIdentityServiceHttpClient
         }
     }
 
+    public async Task<UserDto?> UpdateUserAvatarAsync(string userId, string avatarUrl, string avatarSmallUrl, CancellationToken cancellationToken)
+    {
+        var request = new { AvatarUrl = avatarUrl, AvatarSmallUrl = avatarSmallUrl };
+        var response = await _httpClient.PutAsJsonAsync($"api/admin/users/{userId}/avatar", request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to update avatar for user {UserId} in Identity service. Status code: {StatusCode}", userId, response.StatusCode);
+            return null;
+        }
+
+        try
+        {
+            return await response.Content.ReadFromJsonAsync<UserDto>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read update user avatar response from Identity service for user {UserId}.", userId);
+            return null;
+        }
+    }
+
     public async Task<UserDto?> UpdateUserActiveStateAsync(string userId, bool isActive, CancellationToken cancellationToken)
     {
         var request = new { IsActive = isActive };
