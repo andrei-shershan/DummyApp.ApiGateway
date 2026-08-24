@@ -89,4 +89,26 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         Assert.Equal("https://example.com/blob-small.png", result.ThumbnailUrl);
         VerifyNoLogs();
     }
+
+    [Fact]
+    public async Task UploadImageAsync_ReturnsUrl_WhenResponseUsesLowercaseJsonNames()
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new { url = "https://example.com/blob.png", thumbnailUrl = "https://example.com/blob-small.png" }), Encoding.UTF8, "application/json")
+        };
+
+        using var httpClient = CreateHttpClient(response);
+        var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
+        {
+            SecretKey = "test-secret"
+        }));
+
+        var result = await client.UploadImageAsync("base64", "file.png", ImageType.Artwork, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("https://example.com/blob.png", result!.Url);
+        Assert.Equal("https://example.com/blob-small.png", result.ThumbnailUrl);
+        VerifyNoLogs();
+    }
 }

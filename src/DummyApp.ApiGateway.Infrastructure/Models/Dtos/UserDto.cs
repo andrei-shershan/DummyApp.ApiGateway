@@ -7,5 +7,7 @@ public sealed record UserDto
     public string FirstName { get; init; } = string.Empty;
     public string LastName { get; init; } = string.Empty;
     public bool IsActive { get; init; } = true;
+    public string? AvatarUrl { get; init; }
+    public string? AvatarSmallUrl { get; init; }
     public IEnumerable<string> Roles { get; init; } = Array.Empty<string>();
 }

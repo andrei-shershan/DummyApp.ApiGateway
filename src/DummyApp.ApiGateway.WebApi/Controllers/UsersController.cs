@@ -10,7 +10,7 @@ namespace DummyApp.ApiGateway.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = RoleNames.Admin + "," + RoleNames.Creator)]
+[Authorize]
 public sealed class UsersController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -65,5 +65,31 @@ public sealed class UsersController : ControllerBase
         return Ok(updatedProfile);
     }
 
+    [HttpPut("me/avatar")]
+    public async Task<IActionResult> UpdateCurrentUserAvatar([FromBody] UpdateCurrentUserAvatarRequest? request, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Forbid();
+        }
+
+        if (request is null || string.IsNullOrWhiteSpace(request.FileName) || string.IsNullOrWhiteSpace(request.Base64Image))
+        {
+            return BadRequest("FileName and Base64Image are required.");
+        }
+
+        var updatedProfile = await _mediator.Send(new UpdateUserAvatarCommand(userId, request.FileName.Trim(), request.Base64Image.Trim()), cancellationToken);
+        if (updatedProfile is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(updatedProfile);
+    }
+
     public sealed record UpdateCurrentUserProfileRequest(string FirstName, string LastName);
+    public sealed record UpdateCurrentUserAvatarRequest(string FileName, string Base64Image);
 }
