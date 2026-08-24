@@ -9,16 +9,13 @@ namespace DummyApp.ApiGateway.Infrastructure.CQRS.QueryHandlers;
 public sealed class GetArtworkByIdQueryHandler : IRequestHandler<GetArtworkByIdQuery, ArtworkDto?>
 {
     private readonly IStorageServiceHttpClient _storageServiceClient;
-    private readonly IStorageUrlService _storageUrlService;
     private readonly IArtworkQueryFilterService _artworkQueryFilterService;
 
     public GetArtworkByIdQueryHandler(
         IStorageServiceHttpClient storageServiceClient,
-        IStorageUrlService storageUrlService,
         IArtworkQueryFilterService artworkQueryFilterService)
     {
         _storageServiceClient = storageServiceClient;
-        _storageUrlService = storageUrlService;
         _artworkQueryFilterService = artworkQueryFilterService;
     }
 
@@ -36,10 +33,6 @@ public sealed class GetArtworkByIdQueryHandler : IRequestHandler<GetArtworkByIdQ
             return null;
         }
 
-        return artwork with
-        {
-            ImgUrl = _storageUrlService.GetBlobUrl(artwork.ImgUrl),
-            ThumbnailUrl = _storageUrlService.GetBlobUrl(artwork.ThumbnailUrl)
-        };
+        return artwork;
     }
 }

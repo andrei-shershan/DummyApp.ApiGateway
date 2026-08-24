@@ -40,7 +40,7 @@ public sealed class CreateArtworkCommandHandler : IRequestHandler<CreateArtworkC
 
         var fileName = $"{Guid.NewGuid()}{extension}";
 
-        var uploadResult = await _blobServiceClient.UploadImageAsync(request.UploadedImage, fileName, cancellationToken);
+        var uploadResult = await _blobServiceClient.UploadImageAsync(request.UploadedImage, fileName, request.ImageType, cancellationToken);
         if (uploadResult is null || string.IsNullOrEmpty(uploadResult.Url) || string.IsNullOrEmpty(uploadResult.ThumbnailUrl))
         {
             _logger.LogError("Failed to upload image to blob storage.");

@@ -14,11 +14,10 @@ namespace DummyApp.ApiGateway.Infrastructure.Tests.CQRS.QueryHandlers;
 public sealed class GetArtworksPageQueryHandlerTests
 {
     private readonly Mock<IStorageServiceHttpClient> _storageServiceClientMock = new();
-    private readonly Mock<IStorageUrlService> _storageUrlServiceMock = new();
     private readonly Mock<IArtworkQueryFilterService> _artworkQueryFilterServiceMock = new();
 
     private GetArtworksPageQueryHandler CreateHandler()
-        => new(_storageServiceClientMock.Object, _storageUrlServiceMock.Object, _artworkQueryFilterServiceMock.Object);
+        => new(_storageServiceClientMock.Object, _artworkQueryFilterServiceMock.Object);
 
     [Fact]
     public async Task Handle_ReturnsPagedResultWithNormalizedUrls()
@@ -48,14 +47,6 @@ public sealed class GetArtworksPageQueryHandlerTests
             .Setup(x => x.CanAccessArtworkById(artwork))
             .Returns(true);
 
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl("blob/path.png"))
-            .Returns("https://storage.example.com/blob/path.png");
-
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl("small/blob.png"))
-            .Returns("https://storage.example.com/small/blob.png");
-
         var handler = CreateHandler();
 
         var result = await handler.Handle(new GetArtworksPageQuery("creator", true, 2, 5), CancellationToken.None);
@@ -64,8 +55,8 @@ public sealed class GetArtworksPageQueryHandlerTests
         Assert.Equal(5, result.PageSize);
         Assert.Equal(7, result.TotalCount);
         Assert.Single(result.Items);
-        Assert.Equal("https://storage.example.com/blob/path.png", result.Items.Single().ImgUrl);
-        Assert.Equal("https://storage.example.com/small/blob.png", result.Items.Single().ThumbnailUrl);
+        Assert.Equal(artwork.ImgUrl, result.Items.Single().ImgUrl);
+        Assert.Equal(artwork.ThumbnailUrl, result.Items.Single().ThumbnailUrl);
     }
 
     [Fact]
@@ -122,9 +113,6 @@ public sealed class GetArtworksPageQueryHandlerTests
         _artworkQueryFilterServiceMock.Setup(x => x.CanAccessArtworkById(secondArtwork)).Returns(false);
         _artworkQueryFilterServiceMock.Setup(x => x.CanAccessArtworkById(thirdArtwork)).Returns(true);
 
-        _storageUrlServiceMock
-            .Setup(x => x.GetBlobUrl(It.IsAny<string>()))
-            .Returns<string>(url => $"https://storage.example.com/{url}");
 
         var handler = CreateHandler();
 
@@ -135,7 +123,7 @@ public sealed class GetArtworksPageQueryHandlerTests
         Assert.Equal(2, result.TotalCount);
         Assert.Single(result.Items);
         Assert.Equal(thirdArtwork.Id, result.Items.Single().Id);
-        Assert.Equal("https://storage.example.com/img3.png", result.Items.Single().ImgUrl);
-        Assert.Equal("https://storage.example.com/thumb3.png", result.Items.Single().ThumbnailUrl);
+        Assert.Equal(thirdArtwork.ImgUrl, result.Items.Single().ImgUrl);
+        Assert.Equal(thirdArtwork.ThumbnailUrl, result.Items.Single().ThumbnailUrl);
     }
 }

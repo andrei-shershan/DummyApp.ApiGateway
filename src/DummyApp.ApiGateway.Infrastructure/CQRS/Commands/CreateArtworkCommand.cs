@@ -1,3 +1,4 @@
+using DummyApp.ApiGateway.Infrastructure.Models;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using MediatR;
 
@@ -8,6 +9,7 @@ public sealed record CreateArtworkCommand(
     string FileName,
     string Description,
     DateTime CreationDate,
+    ImageType ImageType,
     bool IsActive,
     string UploadedImage,
     string CreatorId,

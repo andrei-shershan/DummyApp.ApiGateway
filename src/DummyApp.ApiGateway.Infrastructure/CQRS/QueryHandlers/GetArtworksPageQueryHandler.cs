@@ -10,16 +10,13 @@ namespace DummyApp.ApiGateway.Infrastructure.CQRS.QueryHandlers;
 public sealed class GetArtworksPageQueryHandler : IRequestHandler<GetArtworksPageQuery, PaginatedResult<ArtworkDto>>
 {
     private readonly IStorageServiceHttpClient _storageServiceClient;
-    private readonly IStorageUrlService _storageUrlService;
     private readonly IArtworkQueryFilterService _artworkQueryFilterService;
 
     public GetArtworksPageQueryHandler(
         IStorageServiceHttpClient storageServiceClient,
-        IStorageUrlService storageUrlService,
         IArtworkQueryFilterService artworkQueryFilterService)
     {
         _storageServiceClient = storageServiceClient;
-        _storageUrlService = storageUrlService;
         _artworkQueryFilterService = artworkQueryFilterService;
     }
 
@@ -37,11 +34,6 @@ public sealed class GetArtworksPageQueryHandler : IRequestHandler<GetArtworksPag
 
             var filteredItems = pagedResult.Items
                 .Where(_artworkQueryFilterService.CanAccessArtworkById)
-                .Select(art => art with
-                {
-                    ImgUrl = _storageUrlService.GetBlobUrl(art.ImgUrl),
-                    ThumbnailUrl = _storageUrlService.GetBlobUrl(art.ThumbnailUrl)
-                })
                 .ToArray();
 
             return new PaginatedResult<ArtworkDto>(filteredItems, pagedResult.PageNumber, pagedResult.PageSize, pagedResult.TotalCount);
@@ -50,11 +42,6 @@ public sealed class GetArtworksPageQueryHandler : IRequestHandler<GetArtworksPag
         var artworks = await _storageServiceClient.GetArtworksAsync(request.CreatorId, activeOnly, cancellationToken);
         var filtered = artworks?
             .Where(_artworkQueryFilterService.CanAccessArtworkById)
-            .Select(art => art with
-            {
-                ImgUrl = _storageUrlService.GetBlobUrl(art.ImgUrl),
-                ThumbnailUrl = _storageUrlService.GetBlobUrl(art.ThumbnailUrl)
-            })
             .ToArray() ?? Array.Empty<ArtworkDto>();
 
         var totalCount = filtered.Length;

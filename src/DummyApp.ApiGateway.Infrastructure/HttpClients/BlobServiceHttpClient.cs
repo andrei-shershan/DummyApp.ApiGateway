@@ -21,9 +21,9 @@ public sealed class BlobServiceHttpClient : IBlobServiceHttpClient
         _blobServiceSecretKey = blobStorageOptions.Value.SecretKey;
     }
 
-    public async Task<ImageUploadResult?> UploadImageAsync(string base64Image, string fileName, CancellationToken cancellationToken)
+    public async Task<ImageUploadResult?> UploadImageAsync(string base64Image, string fileName, ImageType imageType, CancellationToken cancellationToken)
     {
-        var json = JsonSerializer.Serialize(new { base64Image, fileName });
+        var json = JsonSerializer.Serialize(new { base64Image, fileName, imageType });
         using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
         var requestUri = string.IsNullOrWhiteSpace(_blobServiceSecretKey)

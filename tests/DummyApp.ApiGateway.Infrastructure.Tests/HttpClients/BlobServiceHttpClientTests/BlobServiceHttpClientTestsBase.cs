@@ -16,8 +16,6 @@ public abstract class BlobServiceHttpClientTestsBase
             LoggerMock.Object,
             Options.Create(new BlobStorageOptions
             {
-                StorageUrl = "https://blobservice.local/",
-                ContainerName = "container",
                 SecretKey = "test-secret"
             }));
 

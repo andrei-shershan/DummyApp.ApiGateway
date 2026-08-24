@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DummyApp.ApiGateway.Infrastructure.Models;
 
 namespace DummyApp.ApiGateway.WebApi.Models;
 
@@ -16,6 +17,9 @@ public sealed class CreateArtworkBodyRequest
 
     [Required]
     public DateTime CreationDate { get; init; }
+
+    [Required]
+    public ImageType ImageType { get; init; } = ImageType.Artwork;
 
     [Required]
     public string UploadedImage { get; init; } = string.Empty;

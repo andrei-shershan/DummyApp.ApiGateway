@@ -19,12 +19,10 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         using var httpClient = CreateHttpClient(new HttpResponseMessage(HttpStatusCode.BadRequest));
         var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
         {
-            StorageUrl = "https://blobservice.local/",
-            ContainerName = "container",
             SecretKey = "test-secret"
         }));
 
-        var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
+        var result = await client.UploadImageAsync("base64", "file.png", ImageType.Artwork, CancellationToken.None);
 
         Assert.Null(result);
         VerifyLog(LogLevel.Error, "BlobService returned", Times.Once());
@@ -41,12 +39,10 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
         {
-            StorageUrl = "https://blobservice.local/",
-            ContainerName = "container",
             SecretKey = "test-secret"
         }));
 
-        var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
+        var result = await client.UploadImageAsync("base64", "file.png", ImageType.Artwork, CancellationToken.None);
 
         Assert.Null(result);
         VerifyLog(LogLevel.Error, "Unexpected response from BlobService when uploading image.", Times.Once());
@@ -63,12 +59,10 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
         {
-            StorageUrl = "https://blobservice.local/",
-            ContainerName = "container",
             SecretKey = "test-secret"
         }));
 
-        var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
+        var result = await client.UploadImageAsync("base64", "file.png", ImageType.Artwork, CancellationToken.None);
 
         Assert.Null(result);
         VerifyLog(LogLevel.Error, "Failed to parse response from BlobService when uploading image.", Times.Once());
@@ -85,12 +79,10 @@ public class UploadImageAsyncTests : BlobServiceHttpClientTestsBase
         using var httpClient = CreateHttpClient(response);
         var client = new BlobServiceHttpClient(httpClient, LoggerMock.Object, Options.Create(new BlobStorageOptions
         {
-            StorageUrl = "https://blobservice.local/",
-            ContainerName = "container",
             SecretKey = "test-secret"
         }));
 
-        var result = await client.UploadImageAsync("base64", "file.png", CancellationToken.None);
+        var result = await client.UploadImageAsync("base64", "file.png", ImageType.Artwork, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal("https://example.com/blob.png", result!.Url);
