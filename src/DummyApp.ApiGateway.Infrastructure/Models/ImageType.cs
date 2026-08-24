@@ -2,6 +2,6 @@ namespace DummyApp.ApiGateway.Infrastructure.Models;
 
 public enum ImageType
 {
-    Artwork,
-    Avatar
+    Artwork = 0,
+    Avatar = 1
 }
