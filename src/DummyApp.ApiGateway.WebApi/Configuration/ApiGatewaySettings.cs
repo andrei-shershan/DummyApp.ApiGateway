@@ -15,6 +15,7 @@ public sealed record ApiGatewaySettings
     public ServiceBusOptions ServiceBus { get; init; } = new();
     public EmailServiceOptions EmailService { get; init; } = new();
     public FileServiceOptions FileService { get; init; } = new();
+    public AnalyticsServiceOptions AnalyticsService { get; init; } = new();
     public string? OrderQRCode { get; init; }
 }
 
@@ -47,6 +48,7 @@ public sealed record ServicesOptions
     public ServiceEndpointOptions IdentityService { get; init; } = new();
     public ServiceEndpointOptions EmailService { get; init; } = new();
     public ServiceEndpointOptions FileService { get; init; } = new();
+    public ServiceEndpointOptions AnalyticsService { get; init; } = new();
 }
 
 public sealed record ServiceEndpointOptions

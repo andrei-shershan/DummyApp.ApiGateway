@@ -66,6 +66,37 @@ public sealed class CompletedOrderEventsBackgroundServiceTests
     }
 
     [Fact]
+    public void BuildCompletedOrderEmailRequest_ReturnsNull_WhenAddressIsMissing()
+    {
+        var body = JsonSerializer.Serialize(new
+        {
+            Items = new[]
+            {
+                new
+                {
+                    OrderId = Guid.NewGuid(),
+                    ArtworkId = Guid.NewGuid(),
+                    Quantity = 2,
+                    Name = "test",
+                    Description = "test",
+                    ImgUrl = "https://example.com/img.png",
+                    ThumbnailUrl = "https://example.com/thumb.png",
+                    PrintSizeId = 2,
+                    PrintSizeName = "A2",
+                    PriceId = 2,
+                    PriceValue = 80.00m
+                }
+            },
+            Status = "Completed",
+            Address = (object?)null
+        });
+
+        var result = CompletedOrderEventsBackgroundService.BuildCompletedOrderEmailRequest(body);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
     public void BuildCompletedOrderEmailRequest_ReturnsExpectedSendEmailRequest_WhenBodyIsValid()
     {
         var orderId = Guid.NewGuid();

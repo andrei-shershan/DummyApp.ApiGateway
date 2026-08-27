@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -18,8 +19,10 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
     private readonly ServiceBusOptions _serviceBusOptions;
     private readonly IEmailServiceHttpClient _emailServiceClient;
     private readonly IFileServiceHttpClient _fileServiceClient;
+    private readonly IAnalyticsServiceHttpClient _analyticsServiceClient;
     private readonly ILogger<CompletedOrderEventsBackgroundService> _logger;
     private readonly string? _orderQrCodeText;
+    private readonly string _siteId;
     private ServiceBusProcessor? _processor;
 
     public CompletedOrderEventsBackgroundService(
@@ -27,15 +30,19 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
         IOptions<ServiceBusOptions> serviceBusOptions,
         IEmailServiceHttpClient emailServiceClient,
         IFileServiceHttpClient fileServiceClient,
+        IAnalyticsServiceHttpClient analyticsServiceClient,
         IOptions<OrderQRCodeOptions> orderQrCodeOptions,
+        IOptions<ApplicationOptions> applicationOptions,
         ILogger<CompletedOrderEventsBackgroundService> logger)
     {
         _serviceBusClient = serviceBusClient ?? throw new ArgumentNullException(nameof(serviceBusClient));
         _serviceBusOptions = serviceBusOptions?.Value ?? throw new ArgumentNullException(nameof(serviceBusOptions));
         _emailServiceClient = emailServiceClient ?? throw new ArgumentNullException(nameof(emailServiceClient));
         _fileServiceClient = fileServiceClient ?? throw new ArgumentNullException(nameof(fileServiceClient));
+        _analyticsServiceClient = analyticsServiceClient ?? throw new ArgumentNullException(nameof(analyticsServiceClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _orderQrCodeText = orderQrCodeOptions?.Value?.OrderQRCode;
+        _siteId = applicationOptions?.Value?.SiteId ?? string.Empty;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -120,6 +127,24 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
                 await args.AbandonMessageAsync(message);
                 return;
             }
+        }
+
+        try
+        {
+            var analyticsEvent = BuildCompletedOrderAnalyticsEvent(body);
+            if (analyticsEvent is not null)
+            {
+                await _analyticsServiceClient.PublishEventAsync(analyticsEvent, args.CancellationToken);
+                _logger.LogInformation("Analytics event published for message {MessageId}.", message.MessageId);
+            }
+            else
+            {
+                _logger.LogWarning("Completed order event message {MessageId} could not be converted into an analytics event.", message.MessageId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish analytics event for message {MessageId}.", message.MessageId);
         }
 
         SendEmailAttachment? pdfAttachment = null;
@@ -217,6 +242,89 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
             Recipients = new[] { orderSummary.Address.Email },
             Template = "CompletedOrder",
             Parameters = parameters
+        };
+    }
+
+    private AnalyticsEventRequest? BuildCompletedOrderAnalyticsEvent(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        OrderSummaryDto? orderSummary;
+        try
+        {
+            orderSummary = JsonSerializer.Deserialize<OrderSummaryDto>(body, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (orderSummary is null)
+        {
+            return null;
+        }
+
+        var tags = Array.Empty<string>();
+        try
+        {
+            using var jsonDocument = JsonDocument.Parse(body);
+            if (jsonDocument.RootElement.TryGetProperty("Tags", out var tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
+            {
+                tags = tagsElement.EnumerateArray()
+                    .Select(tagElement => tagElement.ValueKind == JsonValueKind.String
+                        ? tagElement.GetString()
+                        : tagElement.ValueKind == JsonValueKind.Object && tagElement.TryGetProperty("Name", out var tagName)
+                            ? tagName.GetString()
+                            : null)
+                    .Where(tagText => !string.IsNullOrWhiteSpace(tagText))
+                    .Cast<string>()
+                    .ToArray();
+            }
+        }
+        catch
+        {
+            tags = Array.Empty<string>();
+        }
+
+        return new AnalyticsEventRequest
+        {
+            OrderId = orderSummary.OrderId,
+            Status = orderSummary.Status,
+            Email = orderSummary.Email,
+            SiteId = _siteId,
+            Address = orderSummary.Address is null
+                ? null
+                : new AnalyticsOrderAddress
+                {
+                    FirstName = orderSummary.Address.FirstName,
+                    LastName = orderSummary.Address.LastName,
+                    Phone = orderSummary.Address.Phone,
+                    Email = orderSummary.Address.Email,
+                    Country = orderSummary.Address.Country,
+                    City = orderSummary.Address.City,
+                    Street = orderSummary.Address.Street,
+                    HouseNumber = orderSummary.Address.HouseNumber,
+                    PostalCode = orderSummary.Address.PostalCode
+                },
+            Items = orderSummary.Items.Select(item => new AnalyticsOrderItem
+            {
+                OrderId = item.OrderId,
+                ArtworkId = item.ArtworkId,
+                Quantity = item.Quantity,
+                Name = item.Name,
+                Description = item.Description,
+                ImgUrl = item.ImgUrl,
+                ThumbnailUrl = item.ThumbnailUrl,
+                PrintSizeId = item.PrintSizeId,
+                PrintSizeName = item.PrintSizeName,
+                PriceId = item.PriceId,
+                PriceValue = item.PriceValue
+            }),
+            Tags = tags,
+            EventTimestamp = DateTimeOffset.UtcNow
         };
     }
 

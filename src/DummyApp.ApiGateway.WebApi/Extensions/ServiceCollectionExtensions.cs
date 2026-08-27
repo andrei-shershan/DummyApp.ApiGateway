@@ -9,6 +9,7 @@ using DummyApp.ApiGateway.WebApi.Configuration;
 using DummyApp.ApiGateway.WebApi.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
+using InfrastructureApplicationOptions = DummyApp.ApiGateway.Infrastructure.Models.ApplicationOptions;
 using BlobStorageOptionsModel = DummyApp.ApiGateway.Infrastructure.Models.BlobStorageOptions;
 using ServiceBusConfigurationOptions = DummyApp.ApiGateway.Infrastructure.Models.ServiceBusOptions;
 
@@ -30,6 +31,12 @@ public static class ServiceCollectionExtensions
 
         services.AddOptions<FileServiceOptions>()
             .Bind(configuration.GetSection("FileService"));
+
+        services.AddOptions<AnalyticsServiceOptions>()
+            .Bind(configuration.GetSection(nameof(ApiGatewaySettings.AnalyticsService)));
+
+        services.AddOptions<InfrastructureApplicationOptions>()
+            .Bind(configuration.GetSection(InfrastructureApplicationOptions.SectionName));
 
         services.AddOptions<OrderQRCodeOptions>()
             .Bind(configuration);
@@ -117,6 +124,15 @@ public static class ServiceCollectionExtensions
             if (!string.IsNullOrWhiteSpace(fileServiceBaseUrl))
             {
                 client.BaseAddress = new Uri(fileServiceBaseUrl);
+            }
+        });
+
+        var analyticsServiceBaseUrl = settings.Services.AnalyticsService.BaseUrl;
+        services.AddHttpClient<IAnalyticsServiceHttpClient, AnalyticsServiceClient>(client =>
+        {
+            if (!string.IsNullOrWhiteSpace(analyticsServiceBaseUrl))
+            {
+                client.BaseAddress = new Uri(analyticsServiceBaseUrl);
             }
         });
 
