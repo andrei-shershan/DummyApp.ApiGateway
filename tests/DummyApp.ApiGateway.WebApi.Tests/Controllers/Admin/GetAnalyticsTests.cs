@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DummyApp.ApiGateway.Infrastructure.CQRS.Queries;
+using DummyApp.ApiGateway.Infrastructure.HttpClients;
 using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
 using DummyApp.ApiGateway.WebApi.Controllers;
 using MediatR;
