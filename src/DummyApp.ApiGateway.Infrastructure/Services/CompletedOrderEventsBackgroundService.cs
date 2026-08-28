@@ -267,27 +267,11 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
             return null;
         }
 
-        var tags = Array.Empty<string>();
-        try
-        {
-            using var jsonDocument = JsonDocument.Parse(body);
-            if (jsonDocument.RootElement.TryGetProperty("Tags", out var tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
-            {
-                tags = tagsElement.EnumerateArray()
-                    .Select(tagElement => tagElement.ValueKind == JsonValueKind.String
-                        ? tagElement.GetString()
-                        : tagElement.ValueKind == JsonValueKind.Object && tagElement.TryGetProperty("Name", out var tagName)
-                            ? tagName.GetString()
-                            : null)
-                    .Where(tagText => !string.IsNullOrWhiteSpace(tagText))
-                    .Cast<string>()
-                    .ToArray();
-            }
-        }
-        catch
-        {
-            tags = Array.Empty<string>();
-        }
+        var tags = orderSummary.Items
+            .SelectMany(item => item.Tags)
+            .Select(tag => tag.Name)
+            .Distinct()
+            .ToArray();
 
         return new AnalyticsEventRequest
         {
@@ -321,7 +305,13 @@ public sealed class CompletedOrderEventsBackgroundService : BackgroundService
                 PrintSizeId = item.PrintSizeId,
                 PrintSizeName = item.PrintSizeName,
                 PriceId = item.PriceId,
-                PriceValue = item.PriceValue
+                PriceValue = item.PriceValue,
+                Tags = item.Tags?.Select(tag => new AnalyticsOrderTag
+                {
+                    Id = tag.Id,
+                    Name = tag.Name,
+                    Type = tag.Type
+                }) ?? Array.Empty<AnalyticsOrderTag>()
             }),
             Tags = tags,
             EventTimestamp = DateTimeOffset.UtcNow
