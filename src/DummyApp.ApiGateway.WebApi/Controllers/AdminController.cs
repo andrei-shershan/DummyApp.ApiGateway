@@ -42,6 +42,18 @@ public sealed class AdminController : ControllerBase
         return Ok(printSizes);
     }
 
+    [HttpGet("analytics")]
+    public async Task<IActionResult> GetAnalytics([FromQuery] int periodDays)
+    {
+        if (periodDays <= 0)
+        {
+            return BadRequest("periodDays must be greater than 0.");
+        }
+
+        var analytics = await _mediator.Send(new GetAnalyticsQuery(periodDays));
+        return Ok(analytics);
+    }
+
     [HttpPost("invite")]
     public async Task<IActionResult> SendInvite([FromBody] SendInviteRequest request)
     {
