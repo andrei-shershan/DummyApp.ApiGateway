@@ -15,4 +15,5 @@ public sealed record OrderItemDto
     public string PrintSizeName { get; init; } = string.Empty;
     public int? PriceId { get; init; }
     public decimal? PriceValue { get; init; }
+    public IEnumerable<TagDto> Tags { get; init; } = Array.Empty<TagDto>();
 }

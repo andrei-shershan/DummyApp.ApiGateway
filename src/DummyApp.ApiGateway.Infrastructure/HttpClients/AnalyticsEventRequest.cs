@@ -1,3 +1,5 @@
+using DummyApp.ApiGateway.Infrastructure.Models.Dtos;
+
 namespace DummyApp.ApiGateway.Infrastructure.HttpClients;
 
 public sealed record AnalyticsEventRequest
@@ -38,4 +40,12 @@ public sealed record AnalyticsOrderItem
     public string PrintSizeName { get; init; } = string.Empty;
     public int? PriceId { get; init; }
     public decimal? PriceValue { get; init; }
+    public IEnumerable<AnalyticsOrderTag> Tags { get; init; } = Array.Empty<AnalyticsOrderTag>();
+}
+
+public sealed record AnalyticsOrderTag
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Type { get; init; } = string.Empty;
 }
